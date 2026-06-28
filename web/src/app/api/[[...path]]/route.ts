@@ -79,16 +79,15 @@ async function handle(nextReq: NextRequest): Promise<NextResponse> {
     );
   }
 
-  // Read body
+  // Read body and pre-parse it so Express body-parser skips (it would hang on our mock req)
   let rawBody = '';
   try { rawBody = nextReq.body ? await nextReq.text() : ''; } catch { /* ignore */ }
 
-  // Build Node.js-like request
   const req = toNodeReq(nextReq);
   if (rawBody) {
-    try { req.body = JSON.parse(rawBody); req._body = true; }
-    catch { req.body = rawBody; }
+    try { req.body = JSON.parse(rawBody); } catch { req.body = rawBody; }
   }
+  req._body = true; // always skip Express body parsing — we already have the body
 
   // Run Express and wait for response
   return new Promise<NextResponse>((resolve) => {
