@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
@@ -164,6 +164,9 @@ export default function SidebarNavigation() {
   const { user } = useAuth();
   const pathname = usePathname();
   const [expanded, setExpanded] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
 
   if (!user) return null;
 
@@ -174,7 +177,8 @@ export default function SidebarNavigation() {
   return (
     <aside
       className={cn(
-        'flex h-full flex-col border-r border-gray-800 bg-gradient-to-b from-gray-900 via-gray-900 to-gray-950 transition-all duration-200',
+        'flex h-full flex-col border-r border-gray-800 bg-gradient-to-b from-gray-900 via-gray-900 to-gray-950',
+        mounted && 'transition-all duration-200',
         expanded ? 'w-64' : 'w-16',
         'lg:w-64',
       )}
