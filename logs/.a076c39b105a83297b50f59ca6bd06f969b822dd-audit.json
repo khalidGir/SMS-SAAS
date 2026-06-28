@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "C:\\Users\\hp\\ALL_PROJECTS\\abdulmenan\\SMS\\logs\\.a076c39b105a83297b50f59ca6bd06f969b822dd-audit.json",
+    "files": [
+        {
+            "date": 1782506243504,
+            "name": "C:\\Users\\hp\\ALL_PROJECTS\\abdulmenan\\SMS\\logs\\mcp-puppeteer-2026-06-26.log",
+            "hash": "624e88b45b521b4a1b7d8fbff03f9739e35d8227cd52c79dd0bb70ad2f8a2471"
+        }
+    ],
+    "hashType": "sha256"
+}

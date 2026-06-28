@@ -1,0 +1,243 @@
+﻿node : prisma:client clientVersion 7.8.0 +104ms
+At line:1 char:141
++ ... ODE_ENV='development'; $env:DEBUG='*'; node src/index.js 2>&1 | Out-F ...
++                                            ~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (prisma:client clientVersion 7.8.0 +104ms:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+prisma:client:clientEngine Using driver adapter: '{\n' +
+  '  "provider": "sqlite",\n' +
+  '  "adapterName": "@prisma/adapter-better-sqlite3"\n' +
+  '}' +2ms
+2026-06-27T18:20:28.658Z router:route new '/login'
+2026-06-27T18:20:28.668Z router:layer new '/login'
+2026-06-27T18:20:28.670Z router:route post /login
+2026-06-27T18:20:28.671Z router:layer new '/'
+2026-06-27T18:20:28.671Z router:route new '/refresh'
+2026-06-27T18:20:28.671Z router:layer new '/refresh'
+2026-06-27T18:20:28.671Z router:route post /refresh
+2026-06-27T18:20:28.673Z router:layer new '/'
+2026-06-27T18:20:28.673Z router:route new '/forgot-password'
+2026-06-27T18:20:28.673Z router:layer new '/forgot-password'
+2026-06-27T18:20:28.674Z router:route post /forgot-password
+2026-06-27T18:20:28.674Z router:layer new '/'
+2026-06-27T18:20:28.674Z router:route new '/reset-password'
+2026-06-27T18:20:28.674Z router:layer new '/reset-password'
+2026-06-27T18:20:28.674Z router:route post /reset-password
+2026-06-27T18:20:28.674Z router:layer new '/'
+2026-06-27T18:20:28.674Z router:route new '/logout'
+2026-06-27T18:20:28.674Z router:layer new '/logout'
+2026-06-27T18:20:28.675Z router:route post /logout
+2026-06-27T18:20:28.675Z router:layer new '/'
+2026-06-27T18:20:28.675Z router:route post /logout
+2026-06-27T18:20:28.675Z router:layer new '/'
+2026-06-27T18:20:28.676Z router use '/' authenticateJWT
+2026-06-27T18:20:28.677Z router:layer new '/'
+2026-06-27T18:20:28.677Z router use '/' withTenantContext
+2026-06-27T18:20:28.677Z router:layer new '/'
+2026-06-27T18:20:28.677Z router:route new '/'
+2026-06-27T18:20:28.677Z router:layer new '/'
+2026-06-27T18:20:28.677Z router:route get /
+2026-06-27T18:20:28.677Z router:layer new '/'
+2026-06-27T18:20:28.677Z router:route get /
+2026-06-27T18:20:28.677Z router:layer new '/'
+2026-06-27T18:20:28.677Z router:route new '/:id'
+2026-06-27T18:20:28.677Z router:layer new '/:id'
+2026-06-27T18:20:28.678Z router:route get /:id
+2026-06-27T18:20:28.678Z router:layer new '/'
+2026-06-27T18:20:28.679Z router:route get /:id
+2026-06-27T18:20:28.679Z router:layer new '/'
+2026-06-27T18:20:28.679Z router:route new '/'
+2026-06-27T18:20:28.679Z router:layer new '/'
+2026-06-27T18:20:28.679Z router:route post /
+2026-06-27T18:20:28.679Z router:layer new '/'
+2026-06-27T18:20:28.679Z router:route post /
+2026-06-27T18:20:28.679Z router:layer new '/'
+2026-06-27T18:20:28.679Z router:route new '/:id'
+2026-06-27T18:20:28.679Z router:layer new '/:id'
+2026-06-27T18:20:28.679Z router:route patch /:id
+2026-06-27T18:20:28.679Z router:layer new '/'
+2026-06-27T18:20:28.679Z router:route patch /:id
+2026-06-27T18:20:28.680Z router:layer new '/'
+2026-06-27T18:20:28.680Z router:route new '/:id/status'
+2026-06-27T18:20:28.680Z router:layer new '/:id/status'
+2026-06-27T18:20:28.680Z router:route patch /:id/status
+2026-06-27T18:20:28.680Z router:layer new '/'
+2026-06-27T18:20:28.680Z router:route patch /:id/status
+2026-06-27T18:20:28.680Z router:layer new '/'
+2026-06-27T18:20:28.680Z router:route new '/:id'
+2026-06-27T18:20:28.680Z router:layer new '/:id'
+2026-06-27T18:20:28.680Z router:route delete /:id
+2026-06-27T18:20:28.680Z router:layer new '/'
+2026-06-27T18:20:28.680Z router:route delete /:id
+2026-06-27T18:20:28.680Z router:layer new '/'
+2026-06-27T18:20:28.680Z router use '/' authenticateJWT
+2026-06-27T18:20:28.680Z router:layer new '/'
+2026-06-27T18:20:28.681Z router use '/' withTenantContext
+2026-06-27T18:20:28.681Z router:layer new '/'
+2026-06-27T18:20:28.681Z router:route new '/'
+2026-06-27T18:20:28.681Z router:layer new '/'
+2026-06-27T18:20:28.681Z router:route get /
+2026-06-27T18:20:28.681Z router:layer new '/'
+2026-06-27T18:20:28.681Z router:route get /
+2026-06-27T18:20:28.681Z router:layer new '/'
+2026-06-27T18:20:28.681Z router:route new '/:id'
+2026-06-27T18:20:28.681Z router:layer new '/:id'
+2026-06-27T18:20:28.681Z router:route get /:id
+2026-06-27T18:20:28.681Z router:layer new '/'
+2026-06-27T18:20:28.681Z router:route get /:id
+2026-06-27T18:20:28.681Z router:layer new '/'
+2026-06-27T18:20:28.682Z router:route new '/'
+2026-06-27T18:20:28.682Z router:layer new '/'
+2026-06-27T18:20:28.682Z router:route post /
+2026-06-27T18:20:28.682Z router:layer new '/'
+2026-06-27T18:20:28.682Z router:route post /
+2026-06-27T18:20:28.682Z router:layer new '/'
+2026-06-27T18:20:28.682Z router:route new '/:id'
+2026-06-27T18:20:28.686Z router:layer new '/:id'
+2026-06-27T18:20:28.686Z router:route patch /:id
+2026-06-27T18:20:28.687Z router:layer new '/'
+2026-06-27T18:20:28.687Z router:route patch /:id
+2026-06-27T18:20:28.687Z router:layer new '/'
+2026-06-27T18:20:28.687Z router use '/' authenticateJWT
+2026-06-27T18:20:28.687Z router:layer new '/'
+2026-06-27T18:20:28.687Z router use '/' withTenantContext
+2026-06-27T18:20:28.688Z router:layer new '/'
+2026-06-27T18:20:28.688Z router:route new '/'
+2026-06-27T18:20:28.688Z router:layer new '/'
+2026-06-27T18:20:28.688Z router:route post /
+2026-06-27T18:20:28.688Z router:layer new '/'
+2026-06-27T18:20:28.688Z router:route post /
+2026-06-27T18:20:28.688Z router:layer new '/'
+2026-06-27T18:20:28.688Z router:route new '/'
+2026-06-27T18:20:28.688Z router:layer new '/'
+2026-06-27T18:20:28.688Z router:route get /
+2026-06-27T18:20:28.688Z router:layer new '/'
+2026-06-27T18:20:28.688Z router:route get /
+2026-06-27T18:20:28.689Z router:layer new '/'
+2026-06-27T18:20:28.689Z router:route new '/:id/void'
+2026-06-27T18:20:28.689Z router:layer new '/:id/void'
+2026-06-27T18:20:28.689Z router:route post /:id/void
+2026-06-27T18:20:28.689Z router:layer new '/'
+2026-06-27T18:20:28.689Z router:route post /:id/void
+2026-06-27T18:20:28.689Z router:layer new '/'
+2026-06-27T18:20:28.689Z router use '/' authenticateJWT
+2026-06-27T18:20:28.689Z router:layer new '/'
+2026-06-27T18:20:28.689Z router use '/' withTenantContext
+2026-06-27T18:20:28.689Z router:layer new '/'
+2026-06-27T18:20:28.690Z router:route new '/summary'
+2026-06-27T18:20:28.690Z router:layer new '/summary'
+2026-06-27T18:20:28.690Z router:route get /summary
+2026-06-27T18:20:28.690Z router:layer new '/'
+2026-06-27T18:20:28.690Z router:route get /summary
+2026-06-27T18:20:28.690Z router:layer new '/'
+2026-06-27T18:20:28.693Z router use '/' authenticateJWT
+2026-06-27T18:20:28.693Z router:layer new '/'
+2026-06-27T18:20:28.694Z router use '/' withTenantContext
+2026-06-27T18:20:28.694Z router:layer new '/'
+2026-06-27T18:20:28.694Z router:route new '/sessions'
+2026-06-27T18:20:28.694Z router:layer new '/sessions'
+2026-06-27T18:20:28.694Z router:route post /sessions
+2026-06-27T18:20:28.694Z router:layer new '/'
+2026-06-27T18:20:28.694Z router:route post /sessions
+2026-06-27T18:20:28.694Z router:layer new '/'
+2026-06-27T18:20:28.694Z router:route new '/sessions'
+2026-06-27T18:20:28.694Z router:layer new '/sessions'
+2026-06-27T18:20:28.695Z router:route get /sessions
+2026-06-27T18:20:28.695Z router:layer new '/'
+2026-06-27T18:20:28.695Z router:route get /sessions
+2026-06-27T18:20:28.695Z router:layer new '/'
+2026-06-27T18:20:28.695Z router:route new '/sessions/:id/activate'
+2026-06-27T18:20:28.695Z router:layer new '/sessions/:id/activate'
+2026-06-27T18:20:28.695Z router:route patch /sessions/:id/activate
+2026-06-27T18:20:28.695Z router:layer new '/'
+2026-06-27T18:20:28.695Z router:route patch /sessions/:id/activate
+2026-06-27T18:20:28.695Z router:layer new '/'
+2026-06-27T18:20:28.695Z router:route new '/terms'
+2026-06-27T18:20:28.695Z router:layer new '/terms'
+2026-06-27T18:20:28.695Z router:route post /terms
+2026-06-27T18:20:28.695Z router:layer new '/'
+2026-06-27T18:20:28.696Z router:route post /terms
+2026-06-27T18:20:28.696Z router:layer new '/'
+2026-06-27T18:20:28.697Z router use '/' authenticateJWT
+2026-06-27T18:20:28.697Z router:layer new '/'
+2026-06-27T18:20:28.697Z router use '/' withTenantContext
+2026-06-27T18:20:28.697Z router:layer new '/'
+2026-06-27T18:20:28.697Z router:route new '/students'
+2026-06-27T18:20:28.697Z router:layer new '/students'
+2026-06-27T18:20:28.697Z router:route get /students
+2026-06-27T18:20:28.697Z router:layer new '/'
+2026-06-27T18:20:28.697Z router:route get /students
+2026-06-27T18:20:28.697Z router:layer new '/'
+2026-06-27T18:20:28.698Z router:route new '/invoices'
+2026-06-27T18:20:28.698Z router:layer new '/invoices'
+2026-06-27T18:20:28.698Z router:route get /invoices
+2026-06-27T18:20:28.698Z router:layer new '/'
+2026-06-27T18:20:28.698Z router:route get /invoices
+2026-06-27T18:20:28.698Z router:layer new '/'
+≡ƒÜÇ SMS API server running on http://localhost:4000
+≡ƒôï Health check: http://localhost:4000/api/v1/health
+[LateFeeCron] ≡ƒòÉ Scheduled for 5 0 * * * UTC
+2026-06-27T18:20:28.698Z router:route new '/payments'
+2026-06-27T18:20:28.698Z router:layer new '/payments'
+2026-06-27T18:20:28.698Z router:route post /payments
+2026-06-27T18:20:28.698Z router:layer new '/'
+2026-06-27T18:20:28.698Z router:route post /payments
+2026-06-27T18:20:28.698Z router:layer new '/'
+2026-06-27T18:20:28.698Z router:route new '/payments/:id/confirm'
+2026-06-27T18:20:28.698Z router:layer new '/payments/:id/confirm'
+2026-06-27T18:20:28.699Z router:route post /payments/:id/confirm
+2026-06-27T18:20:28.699Z router:layer new '/'
+2026-06-27T18:20:28.699Z router:route post /payments/:id/confirm
+2026-06-27T18:20:28.699Z router:layer new '/'
+2026-06-27T18:20:28.700Z express:application set "x-powered-by" to true
+2026-06-27T18:20:28.700Z express:application set "etag" to 'weak'
+2026-06-27T18:20:28.701Z express:application set "etag fn" to [Function: generateETag]
+2026-06-27T18:20:28.701Z express:application set "env" to 'development'
+2026-06-27T18:20:28.701Z express:application set "query parser" to 'simple'
+2026-06-27T18:20:28.702Z express:application set "query parser fn" to [Function: parse]
+2026-06-27T18:20:28.702Z express:application set "subdomain offset" to 2
+2026-06-27T18:20:28.702Z express:application set "trust proxy" to false
+2026-06-27T18:20:28.703Z express:application set "trust proxy fn" to [Function: trustNone]
+2026-06-27T18:20:28.703Z express:application booting in development mode
+2026-06-27T18:20:28.703Z express:application set "view" to [Function: View]
+2026-06-27T18:20:28.704Z express:application set "views" to 'C:\\Users\\hp\\ALL_PROJECTS\\abdulmenan\\SMS\\views'
+2026-06-27T18:20:28.704Z express:application set "jsonp callback name" to 'callback'
+2026-06-27T18:20:28.708Z router use '/' helmetMiddleware
+2026-06-27T18:20:28.708Z router:layer new '/'
+2026-06-27T18:20:28.709Z router use '/' corsMiddleware
+2026-06-27T18:20:28.709Z router:layer new '/'
+2026-06-27T18:20:28.709Z router use '/' jsonParser
+2026-06-27T18:20:28.709Z router:layer new '/'
+2026-06-27T18:20:28.852Z router use '/' cookieParser
+2026-06-27T18:20:28.852Z router:layer new '/'
+2026-06-27T18:20:28.852Z router use '/api/v1/auth' router
+2026-06-27T18:20:28.852Z router:layer new '/api/v1/auth'
+2026-06-27T18:20:28.852Z router use '/api/v1/students' router
+2026-06-27T18:20:28.852Z router:layer new '/api/v1/students'
+2026-06-27T18:20:28.852Z router use '/api/v1/invoices' router
+2026-06-27T18:20:28.852Z router:layer new '/api/v1/invoices'
+2026-06-27T18:20:28.853Z router use '/api/v1/payments' router
+2026-06-27T18:20:28.853Z router:layer new '/api/v1/payments'
+2026-06-27T18:20:28.853Z router use '/api/v1/analytics' router
+2026-06-27T18:20:28.853Z router:layer new '/api/v1/analytics'
+2026-06-27T18:20:28.853Z router use '/api/v1/academic' router
+2026-06-27T18:20:28.853Z router:layer new '/api/v1/academic'
+2026-06-27T18:20:28.853Z router use '/api/v1/parent' router
+2026-06-27T18:20:28.853Z router:layer new '/api/v1/parent'
+2026-06-27T18:20:28.854Z router:route new '/api/v1/admin/run-late-fee'
+2026-06-27T18:20:28.854Z router:layer new '/api/v1/admin/run-late-fee'
+2026-06-27T18:20:28.854Z router:route post /api/v1/admin/run-late-fee
+2026-06-27T18:20:28.854Z router:layer new '/'
+2026-06-27T18:20:28.854Z router:route post /api/v1/admin/run-late-fee
+2026-06-27T18:20:28.854Z router:layer new '/'
+2026-06-27T18:20:28.854Z router:route post /api/v1/admin/run-late-fee
+2026-06-27T18:20:28.854Z router:layer new '/'
+2026-06-27T18:20:28.855Z router:route new '/api/v1/health'
+2026-06-27T18:20:28.855Z router:layer new '/api/v1/health'
+2026-06-27T18:20:28.855Z router:route get /api/v1/health
+2026-06-27T18:20:28.855Z router:layer new '/'
+2026-06-27T18:20:28.855Z router use '/' <anonymous>
+2026-06-27T18:20:28.855Z router:layer new '/'
+2026-06-27T18:20:28.855Z router use '/' <anonymous>
+2026-06-27T18:20:28.855Z router:layer new '/'
