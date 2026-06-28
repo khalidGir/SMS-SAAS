@@ -7,17 +7,28 @@ import path from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const isSqlite = (process.env.DATABASE_URL || '').startsWith('file:');
+async function createPrisma() {
+  const dbUrl = process.env.DATABASE_URL;
 
-let prisma;
-if (isSqlite) {
-  const { PrismaBetterSqlite3 } = await import('@prisma/adapter-better-sqlite3');
-  const dbPath = path.resolve(__dirname, '..', '..', 'dev.db');
-  const adapter = new PrismaBetterSqlite3({ url: dbPath });
-  prisma = new PrismaClient({ adapter });
-} else {
-  prisma = new PrismaClient();
+  if (!dbUrl) {
+    console.warn('DATABASE_URL is not set — falling back to local SQLite (dev.db)');
+    const { PrismaBetterSqlite3 } = await import('@prisma/adapter-better-sqlite3');
+    const dbPath = path.resolve(__dirname, '..', '..', 'dev.db');
+    const adapter = new PrismaBetterSqlite3({ url: dbPath });
+    return new PrismaClient({ adapter });
+  }
+
+  if (dbUrl.startsWith('file:')) {
+    const { PrismaBetterSqlite3 } = await import('@prisma/adapter-better-sqlite3');
+    const dbPath = path.resolve(__dirname, '..', '..', 'dev.db');
+    const adapter = new PrismaBetterSqlite3({ url: dbPath });
+    return new PrismaClient({ adapter });
+  }
+
+  return new PrismaClient({ datasources: { db: { url: dbUrl } } });
 }
+
+const prisma = await createPrisma();
 
 // ---------------------------------------------------------------------------
 // Tenant isolation and soft-delete extension
