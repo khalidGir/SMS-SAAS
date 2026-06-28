@@ -1,4 +1,4 @@
-export const PASSWORD_HASH = '$2b$10$0XafWvotMu9ABn5MBA2EWuktf6vgNNyqc380ROv77iZZaPDKJ7MrO';
+export const PASSWORD_HASH = '$2b$10$E7sqdyYBdVs9wF0NG82Dd.GATOBwNMqmHXpoeetgDEA.8zSDpq2pq';
 
 export const schools = [
   {

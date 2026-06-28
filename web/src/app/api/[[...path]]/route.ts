@@ -70,6 +70,18 @@ async function handle(nextReq: NextRequest): Promise<NextResponse> {
     });
   }
 
+  // Debug: test mock Prisma directly (bypasses Express)
+  if (nextReq.nextUrl.pathname === '/api/v1/debug') {
+    try {
+      const { createMockPrisma } = await import('../../../../backend/utils/mockPrisma.js');
+      const mp = createMockPrisma();
+      const user = await mp.user.findUnique({ where: { email: 'admin@nexasoft.sms' } });
+      return NextResponse.json({ found: !!user, email: user?.email, role: user?.role });
+    } catch (err: any) {
+      return NextResponse.json({ error: err?.message ?? String(err) }, { status: 500 });
+    }
+  }
+
   // Initialize Express on first real request
   const ready = await initExpress();
   if (!ready) {

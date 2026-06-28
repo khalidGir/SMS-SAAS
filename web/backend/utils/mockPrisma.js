@@ -158,15 +158,28 @@ function pickFields(record, select) {
   return result;
 }
 
+// ── Singular → plural table name ──
+function pluralTable(singular) {
+  const map = {
+    user: 'users', student: 'students', invoice: 'invoices', payment: 'payments',
+    feeStructure: 'feeStructures', school: 'schools', class: 'classes',
+    academicSession: 'academicSessions', term: 'terms', enrollment: 'enrollments',
+  };
+  return map[singular] || singular + 's';
+}
+
 // ── Include (relations) ──
-function resolveIncludes(record, include, tables) {
+function resolveIncludes(record, include, tables, modelName) {
   if (!include) return record;
   const result = { ...record };
+  const modelRels = modelName ? RELATIONS[modelName] : null;
   for (const [relName, relConfig] of Object.entries(include)) {
     if (!relConfig) continue;
-    const rel = RELATIONS[relName];
+    const rel = modelRels?.[relName];
     if (!rel) continue;
-    const relatedTable = tables[rel.model];
+    const tableKey = pluralTable(rel.model);
+    const relatedTable = tables[tableKey];
+    if (!relatedTable) continue;
 
     if (rel.type === 'belongsTo') {
       const related = relatedTable.find(r => r[rel.pk] === record[rel.fk]) || null;
@@ -174,6 +187,7 @@ function resolveIncludes(record, include, tables) {
         pickFields(related, relConfig.select),
         relConfig.include,
         tables,
+        rel.model,
       ) : null;
     } else if (rel.type === 'hasMany') {
       let related = relatedTable.filter(r => r[rel.fk] === record[rel.pk]);
@@ -185,6 +199,7 @@ function resolveIncludes(record, include, tables) {
         pickFields(r, relConfig.select),
         relConfig.include,
         tables,
+        rel.model,
       ));
     }
   }
@@ -215,36 +230,40 @@ function createModel(modelName, tableRef) {
   }
 
   return {
-    async findUnique({ where, include, select }) {
+    async findUnique(args = {}) {
+      const { where, include, select } = args;
       const rows = filter(where);
       const record = rows[0] || null;
       if (!record) return null;
-      const resolved = resolveIncludes(record, include, getTables());
+      const resolved = resolveIncludes(record, include, getTables(), modelName);
       return pickFields(resolved, select);
     },
 
-    async findFirst({ where, include, select, orderBy }) {
+    async findFirst(args = {}) {
+      const { where, include, select, orderBy } = args;
       let rows = filter(where);
       rows = applyOrderBy(rows, orderBy);
       const record = rows[0] || null;
       if (!record) return null;
-      const resolved = resolveIncludes(record, include, getTables());
+      const resolved = resolveIncludes(record, include, getTables(), modelName);
       return pickFields(resolved, select);
     },
 
-    async findMany({ where, include, select, orderBy, skip, take } = {}) {
+    async findMany(args = {}) {
+      const { where, include, select, orderBy, skip, take } = args;
       let rows = filter(where);
       rows = applyOrderBy(rows, orderBy);
       if (skip) rows = rows.slice(skip);
       if (take !== undefined) rows = rows.slice(0, take);
-      return rows.map(r => pickFields(resolveIncludes(r, include, getTables()), select));
+      return rows.map(r => pickFields(resolveIncludes(r, include, getTables(), modelName), select));
     },
 
-    async create({ data }) {
+    async create(args = {}) {
+      const { data } = args;
       const now = new Date();
       const newRecord = deepClone({
         ...data,
-        id: data.id || shortId(),
+        id: data?.id || shortId(),
         createdAt: now,
         updatedAt: now,
       });
@@ -252,14 +271,16 @@ function createModel(modelName, tableRef) {
       return newRecord;
     },
 
-    async update({ where, data }) {
+    async update(args = {}) {
+      const { where, data } = args;
       const idx = tableRef.findIndex(r => matchRecord(r, applySoftDelete(applyTenantScope(where))));
       if (idx === -1) throw new Error(`${nameUpper} not found for update`);
       tableRef[idx] = { ...tableRef[idx], ...deepClone(data), updatedAt: new Date() };
       return tableRef[idx];
     },
 
-    async updateMany({ where, data }) {
+    async updateMany(args = {}) {
+      const { where, data } = args;
       const matching = tableRef.filter(r => matchRecord(r, applySoftDelete(applyTenantScope(where))));
       for (const record of matching) {
         Object.assign(record, deepClone(data), { updatedAt: new Date() });
@@ -267,11 +288,13 @@ function createModel(modelName, tableRef) {
       return { count: matching.length };
     },
 
-    async count({ where } = {}) {
+    async count(args = {}) {
+      const { where } = args;
       return filter(where).length;
     },
 
-    async aggregate({ where, _count, _sum, _avg, _min, _max }) {
+    async aggregate(args = {}) {
+      const { where, _count, _sum, _avg, _min, _max } = args;
       const rows = filter(where);
       const result = {};
 
@@ -326,7 +349,8 @@ function createModel(modelName, tableRef) {
       return result;
     },
 
-    async deleteMany({ where } = {}) {
+    async deleteMany(args = {}) {
+      const { where } = args;
       let w = where;
       if (!w && tenantCtx.schoolId) w = {};
       w = applySoftDelete(applyTenantScope(w || {}));

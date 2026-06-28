@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import { getPrismaContext } from './prismaContext.js';
 
-const isDemo = process.env.DEMO_MODE === 'true' || !process.env.DATABASE_URL;
+const isDemo = process.env.DEMO_MODE === 'true' || !process.env.DATABASE_URL || process.env.VERCEL === '1';
 
 let xprisma;
 
