@@ -2,10 +2,11 @@
 
 import { useEffect, type ReactNode } from 'react';
 
+const IS_DEMO = true;
+
 export function MswProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
-    const enable = process.env.NEXT_PUBLIC_MSW_ENABLED === 'true';
-    if (!enable || typeof window === 'undefined') return;
+    if (!IS_DEMO || typeof window === 'undefined') return;
 
     const start = async () => {
       try {
