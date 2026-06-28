@@ -145,13 +145,13 @@ async function handle(nextReq: NextRequest): Promise<NextResponse> {
       hasHeader(name: string) { return name.toLowerCase() in resHeaders; },
       json(body: any) {
         this.setHeader('content-type', 'application/json; charset=utf-8');
-        chunks.push(Buffer.from(JSON.stringify(body)));
+        this.end(JSON.stringify(body));
       },
       status(code: number) { statusCode = code; return this; },
       sendStatus(code: number) { statusCode = code; this.end(); },
       send(body: any) {
         if (typeof body === 'object' && body !== null) return this.json(body);
-        chunks.push(Buffer.from(String(body ?? '')));
+        this.end(String(body ?? ''));
       },
       type(t: string) { this.setHeader('content-type', t); return this; },
       attachment() {},
