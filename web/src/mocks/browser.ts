@@ -4,6 +4,7 @@ import { parentHandlers } from './handlers/parent';
 import { adminHandlers } from './handlers/admin';
 import { accountantHandlers } from './handlers/accountant';
 import { analyticsHandlers } from './handlers/analytics';
+import { reportHandlers } from './handlers/reports';
 
 export const worker = setupWorker(
   ...authHandlers,
@@ -11,4 +12,5 @@ export const worker = setupWorker(
   ...adminHandlers,
   ...accountantHandlers,
   ...analyticsHandlers,
+  ...reportHandlers,
 );

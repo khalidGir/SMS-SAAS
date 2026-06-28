@@ -29,7 +29,7 @@ const quickActions = [
     ),
   },
   {
-    label: 'Generate Report',
+    label: 'Reports Hub',
     href: '/dashboard/accountant/reports',
     color: 'bg-amber-50 text-amber-700 ring-amber-600/20',
     icon: (
