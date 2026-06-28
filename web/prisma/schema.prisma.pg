@@ -1,0 +1,321 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ==========================================
+// ENUMS
+// ==========================================
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  REGISTRAR
+  ACCOUNTANT
+  PARENT
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum StudentStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  EXPELLED
+  GRADUATED
+  TRANSFERRED
+}
+
+enum PaymentStatus {
+  UNPAID
+  PARTIALLY_PAID
+  PAID
+  REFUNDED
+  PENDING
+  VOIDED
+}
+
+enum TemporalStatus {
+  CURRENT
+  OVERDUE
+}
+
+enum LateFeeType {
+  FLAT
+  DAILY
+}
+
+enum PaymentMethod {
+  CASH
+  BANK_TRANSFER
+  CARD
+  CHEQUE
+  CHAPA
+  TELEBIRR
+}
+
+// ==========================================
+// SYSTEM & TENANCY
+// ==========================================
+
+model School {
+  id                      String   @id @default(uuid())
+  name                    String
+  address                 String?
+  minPartialPaymentAllowed Decimal @default(0.00) @db.Decimal(12, 2)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+  deletedAt               DateTime?
+
+  users          User[]
+  academicSessions AcademicSession[]
+  classes        Class[]
+  students       Student[]
+  feeStructures  FeeStructure[]
+  invoices       Invoice[]
+
+  @@index([deletedAt])
+}
+
+model User {
+  id                String    @id @default(uuid())
+  schoolId          String?
+  email             String    @unique
+  phone             String?   @unique
+  passwordHash      String
+  firstName         String
+  lastName          String
+  role              UserRole
+  status            String    @default("Active")
+  failedAttempts    Int       @default(0)
+  lockedUntil       DateTime?
+  lastLogin         DateTime?
+  resetToken        String?   @unique
+  resetTokenExpires DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  deletedAt         DateTime?
+
+  school            School?   @relation(fields: [schoolId], references: [id])
+  paymentsRecorded  Payment[]
+
+  @@index([schoolId])
+  @@index([role])
+  @@index([deletedAt])
+}
+
+// ==========================================
+// ACADEMIC
+// ==========================================
+
+model AcademicSession {
+  id        String   @id @default(uuid())
+  schoolId  String
+  name      String
+  startDate DateTime
+  endDate   DateTime
+  status    String   @default("Active")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  school    School   @relation(fields: [schoolId], references: [id])
+  terms     Term[]
+  enrollments Enrollment[]
+
+  @@index([schoolId])
+}
+
+model Term {
+  id                String   @id @default(uuid())
+  academicSessionId String
+  name              String
+  startDate         DateTime
+  endDate           DateTime
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  deletedAt         DateTime?
+
+  academicSession   AcademicSession @relation(fields: [academicSessionId], references: [id])
+  feeStructures     FeeStructure[]
+  invoices          Invoice[]
+
+  @@index([academicSessionId])
+}
+
+model Class {
+  id        String   @id @default(uuid())
+  schoolId  String
+  name      String
+  capacity  Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  school    School   @relation(fields: [schoolId], references: [id])
+  enrollments Enrollment[]
+
+  @@index([schoolId])
+}
+
+model Enrollment {
+  id             String   @id @default(uuid())
+  studentId      String
+  classId        String
+  sessionId      String
+  enrollmentDate DateTime
+  status         String   @default("Active")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  student        Student         @relation(fields: [studentId], references: [id])
+  class          Class           @relation(fields: [classId], references: [id])
+  session        AcademicSession @relation(fields: [sessionId], references: [id])
+
+  @@index([studentId])
+  @@index([classId])
+  @@index([sessionId])
+}
+
+// ==========================================
+// STUDENT
+// ==========================================
+
+model Student {
+  id                 String        @id @default(uuid())
+  schoolId           String
+  studentId          String        @unique
+  firstName          String
+  lastName           String
+  dateOfBirth        DateTime
+  gender             Gender
+  guardianName       String
+  guardianPhone      String?
+  guardianEmail      String?
+  address            String?
+  previousSchool     String?
+  status             StudentStatus @default(PENDING)
+  statusChangeReason String?
+  parentUserId       String?
+  deletedAt          DateTime?
+
+  school             School        @relation(fields: [schoolId], references: [id])
+  invoices           Invoice[]
+  enrollments        Enrollment[]
+
+  @@index([schoolId])
+  @@index([status])
+  @@index([deletedAt])
+}
+
+// ==========================================
+// FINANCIAL
+// ==========================================
+
+model FeeStructure {
+  id           String      @id @default(uuid())
+  schoolId     String
+  termId       String
+  name         String
+  baseAmount   Decimal         @db.Decimal(12, 2)
+  dueDate      DateTime
+  lateFeeRate  Decimal         @default(0.00) @db.Decimal(12, 2)
+  lateFeeType  LateFeeType @default(FLAT)
+  frequency    String      @default("Termly")
+  status       String      @default("Active")
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  deletedAt    DateTime?
+
+  school       School      @relation(fields: [schoolId], references: [id])
+  term         Term        @relation(fields: [termId], references: [id])
+  invoices     Invoice[]
+
+  @@index([schoolId])
+  @@index([termId])
+}
+
+model Invoice {
+  id                 String         @id @default(uuid())
+  invoiceNo          String         @unique
+  schoolId           String
+  studentId          String
+  feeStructureId     String
+  termId             String
+  totalAmount        Decimal         @db.Decimal(12, 2)
+  discountAmount     Decimal         @default(0.00) @db.Decimal(12, 2)
+  lateFeeAmount      Decimal         @default(0.00) @db.Decimal(12, 2)
+  netAmount          Decimal         @db.Decimal(12, 2)
+  paidAmount         Decimal         @default(0.00) @db.Decimal(12, 2)
+  outstandingAmount  Decimal         @db.Decimal(12, 2)
+  dueDate            DateTime
+  issuedDate         DateTime       @default(now())
+  paymentStatus      PaymentStatus  @default(UNPAID)
+  temporalStatus     TemporalStatus @default(CURRENT)
+  notes              String?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+  deletedAt          DateTime?
+
+  school             School         @relation(fields: [schoolId], references: [id])
+  student            Student        @relation(fields: [studentId], references: [id])
+  feeStructure       FeeStructure   @relation(fields: [feeStructureId], references: [id])
+  term               Term           @relation(fields: [termId], references: [id])
+  payments           Payment[]
+
+  @@index([schoolId])
+  @@index([studentId])
+  @@index([paymentStatus, temporalStatus])
+  @@index([deletedAt])
+}
+
+model Payment {
+  id            String        @id @default(uuid())
+  receiptNo     String        @unique
+  invoiceId     String
+  amount        Decimal         @db.Decimal(12, 2)
+  paymentMethod PaymentMethod
+  paymentDate   DateTime      @default(now())
+  referenceId   String?
+  recordedById  String
+  status        String        @default("Confirmed")
+  isVoided      Boolean       @default(false)
+  voidedAt      DateTime?
+  voidReason    String?
+  notes         String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  invoice       Invoice       @relation(fields: [invoiceId], references: [id])
+  recordedBy    User          @relation(fields: [recordedById], references: [id])
+
+  @@index([invoiceId])
+  @@index([recordedById])
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  schoolId    String?
+  userId      String?
+  action      String
+  entityType  String
+  entityId    String?
+  oldValues   String?
+  newValues   String?
+  ipAddress   String?
+  createdAt   DateTime @default(now())
+
+  @@index([schoolId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
