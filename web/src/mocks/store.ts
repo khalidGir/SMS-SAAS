@@ -198,6 +198,42 @@ class InMemoryStore {
     return student;
   }
 
+  createSchoolWithAdmin(data: {
+    schoolName: string;
+    address: string;
+    phone: string;
+    schoolEmail: string;
+    planType: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+  }) {
+    const school = {
+      id: freshId('school'),
+      name: data.schoolName,
+      address: data.address,
+      phone: data.phone,
+      email: data.schoolEmail,
+      planType: data.planType,
+      minPartialPaymentAllowed: 500,
+    };
+    const user = {
+      id: freshId('user'),
+      schoolId: school.id,
+      email: data.email,
+      passwordHash: '',
+      firstName: data.firstName,
+      lastName: data.lastName,
+      role: 'ADMIN',
+      status: 'Active',
+      failedAttempts: 0,
+      lockedUntil: null,
+    };
+    this.schools.push(school);
+    this.users.push(user);
+    return { school, user };
+  }
+
   voidPayment(paymentId: string, reason: string) {
     const payment = this.payments.find(p => p.id === paymentId);
     if (!payment || payment.isVoided) return null;

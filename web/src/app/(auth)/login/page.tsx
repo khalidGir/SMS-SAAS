@@ -109,6 +109,12 @@ export default function LoginPage() {
         </a>
       </div>
 
+      {/* Register link */}
+      <p className="text-center text-sm text-gray-500">
+        New school?{' '}
+        <a href="/register" className="font-medium text-violet-600 hover:text-violet-500">Register your school</a>
+      </p>
+
       {/* Submit */}
       <button
         type="submit"

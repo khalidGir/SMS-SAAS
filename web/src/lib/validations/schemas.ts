@@ -296,3 +296,21 @@ export const createPlatformUserSchema = z.object({
   schoolId: z.string().min(1, 'School assignment is required'),
 });
 export type CreatePlatformUserInput = z.infer<typeof createPlatformUserSchema>;
+
+// ── School Owner Registration ────────────────────────────────
+export const registerSchoolSchema = z.object({
+  schoolName: z.string().min(1, 'School name is required').max(255),
+  address: z.string().min(1, 'Address is required'),
+  phone: z.string().min(1, 'Phone is required').max(20),
+  schoolEmail: z.string().email('Invalid email address'),
+  planType: z.enum(['BASIC', 'STANDARD', 'PREMIUM'], { message: 'Please select a plan' }),
+  firstName: z.string().min(1, 'First name is required').max(100),
+  lastName: z.string().min(1, 'Last name is required').max(100),
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+  confirmPassword: z.string().min(1, 'Please confirm your password'),
+}).refine((d) => d.password === d.confirmPassword, {
+  message: 'Passwords do not match',
+  path: ['confirmPassword'],
+});
+export type RegisterSchoolInput = z.infer<typeof registerSchoolSchema>;

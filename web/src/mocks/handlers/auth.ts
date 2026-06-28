@@ -90,6 +90,53 @@ export const authHandlers = [
     }
   }),
 
+  http.post('/api/v1/auth/register', async ({ request }) => {
+    const body = (await request.json()) as Record<string, string>;
+    const { schoolName, address, phone, schoolEmail, planType, firstName, lastName, email, password } = body || {};
+
+    if (!schoolName || !email || !password) {
+      return HttpResponse.json(
+        { status: 'error', error: { code: 'VALIDATION_ERROR', message: 'Missing required fields' } },
+        { status: 422 },
+      );
+    }
+
+    const existing = store.findUserByEmail(email);
+    if (existing) {
+      return HttpResponse.json(
+        { status: 'error', error: { code: 'EMAIL_TAKEN', message: 'An account with this email already exists' } },
+        { status: 409 },
+      );
+    }
+
+    const { school, user } = store.createSchoolWithAdmin({
+      schoolName, address, phone, schoolEmail, planType: planType || 'BASIC',
+      firstName, lastName, email,
+    });
+
+    const tokens = makeTokens(user.id, user.schoolId, user.role, user.email);
+    const profile = {
+      id: user.id, email: user.email,
+      firstName: user.firstName, lastName: user.lastName,
+      role: user.role, schoolId: user.schoolId,
+      schoolName: school.name,
+    };
+
+    return HttpResponse.json({
+      status: 'success',
+      data: {
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+        user: profile,
+      },
+    }, {
+      status: 201,
+      headers: {
+        'Set-Cookie': `refreshToken=${tokens.refreshToken}; Path=/; SameSite=Strict`,
+      },
+    });
+  }),
+
   http.post('/api/v1/auth/logout', () => {
     return HttpResponse.json({ status: 'success', message: 'Logged out' });
   }),
