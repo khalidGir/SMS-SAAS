@@ -28,28 +28,23 @@ export const analyticsHandlers = [
         })
       : allPayments;
 
-    const totalInvoiced = invoices.reduce((sum, inv) => sum + inv.netAmount, 0);
+    const totalOutstandingFees = invoices.reduce((sum, inv) => sum + inv.outstandingAmount, 0);
     const totalCollected = schoolPayments
       .filter(p => p.status === 'Confirmed' && !p.isVoided)
       .reduce((sum, p) => sum + p.amount, 0);
-    const totalOutstanding = invoices.reduce((sum, inv) => sum + inv.outstandingAmount, 0);
-    const activeStudents = students.filter(s => s.status === 'ACTIVE').length;
-    const overdueInvoices = invoices.filter(inv => inv.temporalStatus === 'OVERDUE').length;
-
-    const collectionRate = totalInvoiced > 0 ? Math.round((totalCollected / totalInvoiced) * 100) : 0;
+    const activeStudentCount = students.filter(s => s.status === 'ACTIVE').length;
+    const pendingEnrollmentCount = students.filter(s => s.status === 'PENDING').length;
+    const activeInvoiceCount = invoices.filter(i => i.paymentStatus !== 'PAID' && i.paymentStatus !== 'VOIDED').length;
 
     return HttpResponse.json({
       status: 'success',
       data: {
-        totalInvoiced,
+        totalOutstandingFees,
         totalCollected,
-        totalOutstanding,
-        collectionRate,
-        activeStudents,
-        overdueInvoices,
-        totalInvoices: invoices.length,
-        totalStudents: students.length,
-        totalPayments: schoolPayments.length,
+        activeInvoiceCount,
+        activeStudentCount,
+        pendingEnrollmentCount,
+        role: user.role,
       },
     });
   }),

@@ -56,7 +56,12 @@ export const authHandlers = [
         refreshToken: tokens.refreshToken,
         user: profile,
       },
-    }, { status: 200 });
+    }, {
+      status: 200,
+      headers: {
+        'Set-Cookie': `refreshToken=${tokens.refreshToken}; Path=/; SameSite=Strict`,
+      },
+    });
   }),
 
   http.post('/api/v1/auth/refresh', async ({ cookies }) => {
