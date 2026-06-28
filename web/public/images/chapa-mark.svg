@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80">
+  <defs>
+    <linearGradient id="chapaLeaf" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7DC400"/>
+      <stop offset="50%" stop-color="#5EB84D"/>
+      <stop offset="100%" stop-color="#2EB8B4"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#chapaLeaf)" d="M40 5C20.7 5 5 20.7 5 40s15.7 35 35 35 35-15.7 35-35S59.3 5 40 5zm0 62c-14.9 0-27-12.1-27-27s12.1-27 27-27 27 12.1 27 27-12.1 27-27 27z"/>
+  <path fill="url(#chapaLeaf)" d="M52 28h-8v-4c0-2.2-1.8-4-4-4s-4 1.8-4 4v4h-2c-4.4 0-8 3.6-8 8v16c0 4.4 3.6 8 8 8h18c4.4 0 8-3.6 8-8V36c0-4.4-3.6-8-8-8zm-14 4h4v4h-4v-4zm18 20c0 2.2-1.8 4-4 4H34c-2.2 0-4-1.8-4-4V36c0-2.2 1.8-4 4-4h2v4c0 2.2 1.8 4 4 4h8c2.2 0 4-1.8 4-4v-4c2.2 0 4 1.8 4 4v16z"/>
+</svg>
