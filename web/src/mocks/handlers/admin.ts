@@ -93,6 +93,69 @@ export const adminHandlers = [
     return HttpResponse.json({ status: 'success', data: session });
   }),
 
+  http.get('/api/v1/classes', ({ request }) => {
+    const user = resolveUser(request);
+    if (!user) return HttpResponse.json({ status: 'error', error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } }, { status: 401 });
+
+    const schoolId = user.schoolId;
+    const classes = schoolId ? store.classes.filter(c => c.schoolId === schoolId) : store.classes;
+    return HttpResponse.json({ status: 'success', data: classes });
+  }),
+
+  http.get('/api/v1/enrollments', ({ request }) => {
+    const user = resolveUser(request);
+    if (!user) return HttpResponse.json({ status: 'error', error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } }, { status: 401 });
+
+    const schoolId = user.schoolId;
+    const schoolStudents = schoolId ? store.findStudentsBySchool(schoolId) : store.students;
+    const studentIds = new Set(schoolStudents.map(s => s.id));
+    const enrollments = store.enrollments.filter(e => studentIds.has(e.studentId));
+
+    const result = enrollments.map(e => ({
+      id: e.id,
+      studentId: e.studentId,
+      classId: e.classId,
+      sessionId: e.sessionId,
+      enrollmentDate: e.enrollmentDate,
+      status: e.status,
+      student: store.findStudentById(e.studentId)
+        ? { firstName: store.findStudentById(e.studentId)!.firstName, lastName: store.findStudentById(e.studentId)!.lastName }
+        : null,
+      class: store.findClassById(e.classId) ? { name: store.findClassById(e.classId)!.name } : null,
+      session: store.findSessionById(e.sessionId) ? { name: store.findSessionById(e.sessionId)!.name } : null,
+    }));
+
+    return HttpResponse.json({ status: 'success', data: result });
+  }),
+
+  http.post('/api/v1/enrollments', async ({ request }) => {
+    const user = resolveUser(request);
+    if (!user) return HttpResponse.json({ status: 'error', error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } }, { status: 401 });
+
+    const body = (await request.json()) as { studentId?: string; classId?: string; sessionId?: string };
+    if (!body.studentId || !body.classId || !body.sessionId) {
+      return HttpResponse.json({ status: 'error', error: { code: 'VALIDATION_ERROR', message: 'studentId, classId, and sessionId are required' } }, { status: 422 });
+    }
+
+    const enrollment = store.createEnrollment({
+      studentId: body.studentId,
+      classId: body.classId,
+      sessionId: body.sessionId,
+    });
+
+    return HttpResponse.json({
+      status: 'success',
+      data: {
+        ...enrollment,
+        student: store.findStudentById(enrollment.studentId)
+          ? { firstName: store.findStudentById(enrollment.studentId)!.firstName, lastName: store.findStudentById(enrollment.studentId)!.lastName }
+          : null,
+        class: store.findClassById(enrollment.classId) ? { name: store.findClassById(enrollment.classId)!.name } : null,
+        session: store.findSessionById(enrollment.sessionId) ? { name: store.findSessionById(enrollment.sessionId)!.name } : null,
+      },
+    });
+  }),
+
   http.post('/api/v1/academic/terms', async ({ request }) => {
     const body = (await request.json()) as { academicSessionId?: string; name?: string; startDate?: string; endDate?: string };
     if (!body.academicSessionId || !body.name || !body.startDate || !body.endDate) {

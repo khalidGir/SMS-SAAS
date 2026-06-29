@@ -288,6 +288,19 @@ class InMemoryStore {
     return term;
   }
 
+  createEnrollment(data: { studentId: string; classId: string; sessionId: string }) {
+    const enrollment = {
+      id: freshId('enroll'),
+      studentId: data.studentId,
+      classId: data.classId,
+      sessionId: data.sessionId,
+      enrollmentDate: new Date().toISOString().split('T')[0],
+      status: 'Active',
+    };
+    this.enrollments.push(enrollment);
+    return enrollment;
+  }
+
   updateStudentStatus(studentId: string, status: string, reason?: string) {
     const student = this.students.find(s => s.id === studentId);
     if (!student) return null;
