@@ -301,6 +301,53 @@ class InMemoryStore {
     return enrollment;
   }
 
+  private nextStudentNumber() {
+    let max = 0;
+    for (const s of this.students) {
+      const match = s.studentId?.match(/SCH-\d{4}-(\d+)/);
+      if (match) {
+        const n = parseInt(match[1], 10);
+        if (n > max) max = n;
+      }
+    }
+    return max + 1;
+  }
+
+  createStudent(data: {
+    firstName: string;
+    lastName: string;
+    dateOfBirth: string;
+    gender: string;
+    guardianName: string;
+    guardianPhone: string | null;
+    guardianEmail: string | null;
+    address: string | null;
+    previousSchool: string | null;
+    schoolId: string;
+  }) {
+    const year = new Date().getFullYear();
+    const num = String(this.nextStudentNumber()).padStart(4, '0');
+    const student = {
+      id: freshId('student'),
+      studentId: `SCH-${year}-${num}`,
+      firstName: data.firstName,
+      lastName: data.lastName,
+      dateOfBirth: data.dateOfBirth,
+      gender: data.gender,
+      guardianName: data.guardianName,
+      guardianPhone: data.guardianPhone ?? null,
+      guardianEmail: data.guardianEmail ?? null,
+      address: data.address ?? null,
+      previousSchool: data.previousSchool ?? null,
+      schoolId: data.schoolId,
+      status: 'ACTIVE',
+      statusChangeReason: null,
+      parentUserId: null,
+    };
+    this.students.push(student);
+    return student;
+  }
+
   updateStudentStatus(studentId: string, status: string, reason?: string) {
     const student = this.students.find(s => s.id === studentId);
     if (!student) return null;

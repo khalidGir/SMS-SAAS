@@ -58,6 +58,31 @@ export const adminHandlers = [
     return HttpResponse.json({ status: 'success', data: student });
   }),
 
+  http.post('/api/v1/students', async ({ request }) => {
+    const user = resolveUser(request);
+    if (!user) return HttpResponse.json({ status: 'error', error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } }, { status: 401 });
+
+    const body = (await request.json()) as Record<string, any>;
+    if (!body.firstName || !body.lastName || !body.dateOfBirth || !body.gender || !body.guardianName) {
+      return HttpResponse.json({ status: 'error', error: { code: 'VALIDATION_ERROR', message: 'firstName, lastName, dateOfBirth, gender, and guardianName are required' } }, { status: 422 });
+    }
+
+    const student = store.createStudent({
+      firstName: body.firstName,
+      lastName: body.lastName,
+      dateOfBirth: body.dateOfBirth,
+      gender: body.gender,
+      guardianName: body.guardianName,
+      guardianPhone: body.guardianPhone || null,
+      guardianEmail: body.guardianEmail || null,
+      address: body.address || null,
+      previousSchool: body.previousSchool || null,
+      schoolId: user.schoolId || 'school-1',
+    });
+
+    return HttpResponse.json({ status: 'success', data: student });
+  }),
+
   http.get('/api/v1/academic/sessions', () => {
     const sessions = store.academicSessions.map(s => ({
       ...s,

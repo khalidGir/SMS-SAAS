@@ -23,9 +23,11 @@ export const studentRegistrationSchema = z.object({
   guardianPhone: z.string().max(20).optional().or(z.literal('')),
   guardianEmail: z.string().email('Invalid email address').optional().or(z.literal('')),
 
-  // Step 3: Address & Previous School
+  // Step 3: Address, Previous School & Enrollment
   address: z.string().min(1, 'Address is required'),
   previousSchool: z.string().max(255).optional(),
+  classId: z.string().min(1, 'Class is required'),
+  sessionId: z.string().min(1, 'Academic session is required'),
 
   // FR-009: Document upload validation
   document: z
@@ -93,6 +95,8 @@ const step2Fields = {
 const step3Fields = {
   address: z.string().min(1, 'Address is required'),
   previousSchool: z.string().max(255).optional(),
+  classId: z.string().min(1, 'Class is required'),
+  sessionId: z.string().min(1, 'Academic session is required'),
   document: z
     .any()
     .optional()

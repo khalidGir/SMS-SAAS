@@ -101,7 +101,7 @@ const NAV_ITEMS: NavItem[] = [
     icon: Icons.users,
   },
   {
-    label: 'Register',
+    label: 'Register Student',
     href: '/dashboard/registrar/register',
     roles: ['REGISTRAR'],
     icon: Icons.userPlus,

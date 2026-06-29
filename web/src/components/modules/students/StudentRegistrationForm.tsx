@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -14,21 +14,40 @@ import {
 } from '@/lib/validations/schemas';
 import { cn } from '@/lib/utils';
 
-type StepKeys = 1 | 2 | 3;
+type StepKeys = 1 | 2 | 3 | 4;
 
 const STEP_LABELS: Record<StepKeys, string> = {
   1: 'Personal Details',
   2: 'Guardian Details',
-  3: 'Document & Review',
+  3: 'Address & Enrollment',
+  4: 'Review & Submit',
 };
 
 const STEP_FIELDS: Record<StepKeys, (keyof StudentRegistrationInput)[]> = {
   1: ['firstName', 'lastName', 'dateOfBirth', 'gender'],
   2: ['guardianName', 'guardianPhone', 'guardianEmail'],
-  3: ['address', 'previousSchool', 'document'],
+  3: ['address', 'previousSchool', 'classId', 'sessionId'],
+  4: [],
 };
 
 const GENDER_OPTIONS = ['Male', 'Female', 'Other'] as const;
+
+interface ClassOption {
+  id: string;
+  name: string;
+  capacity: number;
+}
+
+interface TermOption {
+  id: string;
+  name: string;
+}
+
+interface SessionOption {
+  id: string;
+  name: string;
+  terms: TermOption[];
+}
 
 export default function StudentRegistrationForm() {
   const router = useRouter();
@@ -36,11 +55,20 @@ export default function StudentRegistrationForm() {
   const [step, setStep] = useState<StepKeys>(1);
   const [stepErrors, setStepErrors] = useState<string[]>([]);
 
+  const { data: classes, request: fetchClasses } = useApi<ClassOption[]>();
+  const { data: sessions, request: fetchSessions } = useApi<SessionOption[]>();
+
+  useEffect(() => {
+    fetchClasses('GET', '/api/v1/classes');
+    fetchSessions('GET', '/api/v1/academic/sessions');
+  }, [fetchClasses, fetchSessions]);
+
   const {
     register,
     handleSubmit,
     trigger,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<StudentRegistrationInput>({
     resolver: zodResolver(studentRegistrationSchema),
@@ -54,17 +82,15 @@ export default function StudentRegistrationForm() {
       guardianEmail: '',
       address: '',
       previousSchool: '',
+      classId: '',
+      sessionId: '',
       document: undefined,
     },
   });
 
-  // Watch guardian fields for the cross-field refinement display
   const guardianPhone = watch('guardianPhone');
   const guardianEmail = watch('guardianEmail');
 
-  // --------------------------------------------------
-  // Step validation using the step-specific Zod schema
-  // --------------------------------------------------
   async function validateStep(currentStep: StepKeys): Promise<boolean> {
     const values = watch();
     const picked: Record<string, unknown> = {};
@@ -90,7 +116,7 @@ export default function StudentRegistrationForm() {
   async function handleNext() {
     const valid = await validateStep(step);
     if (!valid) return;
-    setStep((prev) => Math.min(prev + 1, 3) as StepKeys);
+    setStep((prev) => Math.min(prev + 1, 4) as StepKeys);
   }
 
   function handleBack() {
@@ -98,19 +124,43 @@ export default function StudentRegistrationForm() {
     setStep((prev) => Math.max(prev - 1, 1) as StepKeys);
   }
 
-  // --------------------------------------------------
-  // Final submit — POST to /api/v1/students
-  // --------------------------------------------------
   async function onSubmit(data: StudentRegistrationInput) {
-    const result = await apiRequest('POST', '/api/v1/students', data);
-    if (result) {
-      router.push('/dashboard/registrar');
+    const token = sessionStorage.getItem('accessToken');
+
+    // Step 1: Create the student
+    const studentResult = await apiRequest('POST', '/api/v1/students', {
+      firstName: data.firstName,
+      lastName: data.lastName,
+      dateOfBirth: data.dateOfBirth,
+      gender: data.gender,
+      guardianName: data.guardianName,
+      guardianPhone: data.guardianPhone || null,
+      guardianEmail: data.guardianEmail || null,
+      address: data.address,
+      previousSchool: data.previousSchool || null,
+    });
+
+    if (!studentResult) return;
+
+    const studentId = (studentResult as any).id;
+
+    // Step 2: Create the enrollment
+    try {
+      const res = await fetch('/api/v1/enrollments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ studentId, classId: data.classId, sessionId: data.sessionId }),
+      });
+      const json = await res.json();
+      if (json.status === 'success') {
+        router.push('/dashboard/registrar/students');
+      }
+    } catch {
+      // enrollment failed but student was created — still redirect
+      router.push('/dashboard/registrar/students');
     }
   }
 
-  // --------------------------------------------------
-  // Error display helpers
-  // --------------------------------------------------
   const fieldError = (field: keyof StudentRegistrationInput) => {
     const e = errors[field];
     return e ? <p className="mt-0.5 text-xs text-red-600">{e.message as string}</p> : null;
@@ -120,13 +170,10 @@ export default function StudentRegistrationForm() {
     step === 2 &&
     stepErrors.some((m) => m.includes('Guardian Phone') || m.includes('Guardian Email'));
 
-  // --------------------------------------------------
-  // Step indicator
-  // --------------------------------------------------
   function StepIndicator() {
     return (
       <div className="mb-6 flex items-center gap-2">
-        {([1, 2, 3] as const).map((s) => (
+        {([1, 2, 3, 4] as const).map((s) => (
           <div key={s} className="flex items-center gap-2">
             <div
               className={cn(
@@ -143,21 +190,17 @@ export default function StudentRegistrationForm() {
             <span className={cn('text-sm max-sm:hidden', step === s ? 'font-medium text-violet-700' : 'text-gray-500')}>
               {STEP_LABELS[s]}
             </span>
-            {s < 3 && <div className="h-px w-8 bg-gray-300 max-sm:hidden" />}
+            {s < 4 && <div className="h-px w-8 bg-gray-300 max-sm:hidden" />}
           </div>
         ))}
       </div>
     );
   }
 
-  // --------------------------------------------------
-  // Render
-  // --------------------------------------------------
   return (
     <div className="mx-auto max-w-2xl">
       <StepIndicator />
 
-      {/* Step-level errors */}
       {stepErrors.length > 0 && !guardianRefineError && (
         <div className="mb-4 rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">
           {stepErrors.map((m, i) => (
@@ -166,7 +209,6 @@ export default function StudentRegistrationForm() {
         </div>
       )}
 
-      {/* API submit error */}
       {submitError && (
         <div className="mb-4 rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">
           {submitError}
@@ -262,14 +304,12 @@ export default function StudentRegistrationForm() {
 
             <p className="text-xs text-gray-400">
               Provide at least one contact method (phone or email) for the guardian.
-              {guardianPhone || guardianEmail
-                ? ' ✓'
-                : ''}
+              {guardianPhone || guardianEmail ? ' ✓' : ''}
             </p>
           </section>
         )}
 
-        {/* ========== STEP 3: Address, Previous School & Review ========== */}
+        {/* ========== STEP 3: Address, Class & Session ========== */}
         {step === 3 && (
           <section className="space-y-4">
             <div>
@@ -290,7 +330,43 @@ export default function StudentRegistrationForm() {
               />
             </div>
 
-            {/* Summary */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Class / Section</label>
+                <select
+                  {...register('classId')}
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+                >
+                  <option value="">Select class...</option>
+                  {(classes ?? []).map(c => (
+                    <option key={c.id} value={c.id}>{c.name} (cap. {c.capacity})</option>
+                  ))}
+                </select>
+                {fieldError('classId')}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Academic Session / Term</label>
+                <select
+                  {...register('sessionId')}
+                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+                >
+                  <option value="">Select session...</option>
+                  {(sessions ?? []).flatMap(s =>
+                    (s.terms ?? []).map(t => (
+                      <option key={t.id} value={t.id}>{s.name} — {t.name}</option>
+                    ))
+                  )}
+                </select>
+                {fieldError('sessionId')}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* ========== STEP 4: Review & Submit ========== */}
+        {step === 4 && (
+          <section className="space-y-4">
             <div className="rounded-md border border-gray-200 bg-gray-50 p-4 text-sm">
               <h3 className="mb-2 font-semibold text-gray-800">Review before submitting</h3>
               <dl className="space-y-1">
@@ -301,12 +377,20 @@ export default function StudentRegistrationForm() {
                 <div className="flex gap-2"><dt className="w-28 font-medium text-gray-500">Contact:</dt><dd>{watch('guardianPhone') || watch('guardianEmail') || '—'}</dd></div>
                 <div className="flex gap-2"><dt className="w-28 font-medium text-gray-500">Address:</dt><dd>{watch('address')}</dd></div>
                 <div className="flex gap-2"><dt className="w-28 font-medium text-gray-500">Prev School:</dt><dd>{watch('previousSchool') || '—'}</dd></div>
+                <div className="flex gap-2">
+                  <dt className="w-28 font-medium text-gray-500">Class:</dt>
+                  <dd>{classes?.find(c => c.id === watch('classId'))?.name ?? watch('classId')}</dd>
+                </div>
+                <div className="flex gap-2">
+                  <dt className="w-28 font-medium text-gray-500">Session:</dt>
+                  <dd>{sessions?.flatMap(s => s.terms).find(t => t.id === watch('sessionId'))?.name ?? watch('sessionId')}</dd>
+                </div>
               </dl>
             </div>
           </section>
         )}
 
-        {/* ========== Navigation buttons ========== */}
+        {/* Navigation buttons */}
         <div className="flex items-center justify-between border-t pt-4">
           <div>
             {step > 1 && (
@@ -322,7 +406,7 @@ export default function StudentRegistrationForm() {
           </div>
 
           <div>
-            {step < 3 ? (
+            {step < 4 ? (
               <button
                 type="button"
                 onClick={handleNext}
@@ -336,7 +420,7 @@ export default function StudentRegistrationForm() {
                 disabled={submitting}
                 className="rounded-md bg-violet-600 px-6 py-2 text-sm font-medium text-white hover:bg-violet-700 disabled:opacity-50"
               >
-                {submitting ? 'Submitting...' : 'Register Student'}
+                {submitting ? 'Submitting...' : 'Register & Enroll'}
               </button>
             )}
           </div>
