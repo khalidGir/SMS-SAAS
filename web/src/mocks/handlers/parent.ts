@@ -68,7 +68,10 @@ export const parentHandlers = [
     const user = resolveUser(request);
     if (!user) return HttpResponse.json({ status: 'error', error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } }, { status: 401 });
 
-    const linked = store.findStudentsByParent(user.id);
+    const household = store.findHouseholdByUserId(user.id);
+    if (!household) return HttpResponse.json({ status: 'success', data: [] });
+
+    const linked = store.findStudentsByHousehold(household.id);
     const result = linked.map(s => {
       const enrollments = store.findEnrollmentsByStudent(s.id);
       return {
@@ -94,9 +97,11 @@ export const parentHandlers = [
     const user = resolveUser(request);
     if (!user) return HttpResponse.json({ status: 'error', error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } }, { status: 401 });
 
-    const linked = store.findStudentsByParent(user.id);
-    const studentIds = new Set(linked.map(s => s.id));
-    const invoices = store.invoices.filter(i => studentIds.has(i.studentId) && i.paymentStatus !== 'VOIDED');
+    const household = store.findHouseholdByUserId(user.id);
+    if (!household) return HttpResponse.json({ status: 'success', data: [] });
+
+    const invoices = store.findInvoicesByHousehold(household.id)
+      .filter(i => i.paymentStatus !== 'VOIDED');
 
     return HttpResponse.json({ status: 'success', data: invoices.map(enrichInvoice).filter(Boolean) });
   }),
@@ -162,6 +167,8 @@ export const parentHandlers = [
     if (!result) {
       return HttpResponse.json({ status: 'error', error: { code: 'NOT_FOUND', message: 'Payment not found' } }, { status: 404 });
     }
+
+    store.appendAuditLog('PAYMENT_CONFIRMED', 'Payment', paymentId, { status: 'PENDING' }, { status: 'Confirmed' }, user.id, user.schoolId);
 
     return HttpResponse.json({
       status: 'success',

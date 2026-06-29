@@ -9,6 +9,7 @@ const ROLE_HOME: Record<string, string> = {
   ADMIN: '/dashboard/admin',
   REGISTRAR: '/dashboard/registrar',
   ACCOUNTANT: '/dashboard/accountant',
+  CASHIER: '/dashboard/cashier',
   PARENT: '/dashboard/parent',
 };
 

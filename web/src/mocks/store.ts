@@ -41,9 +41,55 @@ type StoreInvoice = {
   paymentStatus: string; temporalStatus: string; notes: string | null;
 };
 
+type AuditLog = {
+  id: string;
+  schoolId: string | null;
+  userId: string | null;
+  action: string;
+  entityType: string;
+  entityId: string;
+  oldValues: string | null;
+  newValues: string | null;
+  createdAt: string;
+};
+
+type NotificationRule = {
+  id: string;
+  schoolId: string;
+  name: string;
+  trigger: string;
+  delayDays: number;
+  channels: string[];
+  active: boolean;
+};
+
+type NotificationLog = {
+  id: string;
+  schoolId: string;
+  ruleId: string;
+  invoiceId: string;
+  channels: string[];
+  deliveredAt: string;
+};
+
+type SchoolSettings = {
+  schoolName: string;
+  address: string;
+  phone: string;
+  email: string;
+  currency: string;
+  timezone: string;
+  receiptPrefix: string;
+  receiptFooter: string;
+  minPartialPaymentAllowed: number;
+  logoDataUrl: string | null;
+};
+
 class InMemoryStore {
   schools: any[] = deepClone(SEED.schools);
   users: any[] = deepClone(SEED.users);
+  households: any[] = deepClone(SEED.households);
+  householdMembers: any[] = deepClone(SEED.householdMembers);
   academicSessions: any[] = deepClone(SEED.academicSessions);
   terms: any[] = deepClone(SEED.terms);
   classes: any[] = deepClone(SEED.classes);
@@ -52,11 +98,17 @@ class InMemoryStore {
   enrollments: any[] = deepClone(SEED.enrollments);
   invoices: StoreInvoice[] = deepClone(SEED.invoices);
   payments: StorePayment[] = deepClone(SEED.payments);
+  auditLogs: AuditLog[] = [];
+  notificationRules: NotificationRule[] = [];
+  notificationLogs: NotificationLog[] = [];
+  schoolSettingsMap: Record<string, SchoolSettings> = {};
 
   reset() {
     Object.assign(this, {
       schools: deepClone(SEED.schools),
       users: deepClone(SEED.users),
+      households: deepClone(SEED.households),
+      householdMembers: deepClone(SEED.householdMembers),
       academicSessions: deepClone(SEED.academicSessions),
       terms: deepClone(SEED.terms),
       classes: deepClone(SEED.classes),
@@ -65,9 +117,14 @@ class InMemoryStore {
       enrollments: deepClone(SEED.enrollments),
       invoices: deepClone(SEED.invoices),
       payments: deepClone(SEED.payments),
+      auditLogs: [],
+      notificationRules: [],
+      notificationLogs: [],
+      schoolSettingsMap: {},
     });
   }
 
+  // ── Users ──────────────────────────────────────
   findUserByEmail(email: string) {
     return this.users.find(u => u.email === email) || null;
   }
@@ -76,10 +133,33 @@ class InMemoryStore {
     return this.users.find(u => u.id === id) || null;
   }
 
-  findStudentsByParent(parentUserId: string) {
-    return this.students.filter(s => s.parentUserId === parentUserId);
+  // ── Households ──────────────────────────────────
+  findHouseholdByUserId(userId: string) {
+    const member = this.householdMembers.find(m => m.userId === userId);
+    if (!member) return null;
+    return this.households.find(h => h.id === member.householdId) || null;
   }
 
+  findStudentsByHousehold(householdId: string) {
+    const memberIds = this.householdMembers
+      .filter(m => m.householdId === householdId && m.role === 'STUDENT')
+      .map(m => m.studentId);
+    return this.students.filter(s => memberIds.includes(s.id));
+  }
+
+  findInvoicesByHousehold(householdId: string) {
+    const studentIds = new Set(this.findStudentsByHousehold(householdId).map(s => s.id));
+    return this.invoices.filter(i => studentIds.has(i.studentId));
+  }
+
+  // ── Legacy parent bridge ───────────────────────
+  findStudentsByParent(parentUserId: string) {
+    const household = this.findHouseholdByUserId(parentUserId);
+    if (!household) return [];
+    return this.findStudentsByHousehold(household.id);
+  }
+
+  // ── School ──────────────────────────────────────
   findClassById(id: string) {
     return this.classes.find(c => c.id === id) || null;
   }
@@ -128,6 +208,7 @@ class InMemoryStore {
     return this.payments;
   }
 
+  // ── Payments ────────────────────────────────────
   createPayment(data: {
     invoiceId: string;
     amount: number;
@@ -164,15 +245,28 @@ class InMemoryStore {
     if (invoice) {
       invoice.paidAmount += payment.amount;
       invoice.outstandingAmount = Math.max(0, invoice.netAmount - invoice.paidAmount);
-      if (invoice.outstandingAmount <= 0) {
-        invoice.paymentStatus = 'PAID';
-      } else {
-        invoice.paymentStatus = 'PARTIALLY_PAID';
-      }
+      invoice.paymentStatus = invoice.outstandingAmount <= 0 ? 'PAID' : 'PARTIALLY_PAID';
     }
     return { payment, invoice };
   }
 
+  voidPayment(paymentId: string, reason: string) {
+    const payment = this.payments.find(p => p.id === paymentId);
+    if (!payment || payment.isVoided) return null;
+    payment.isVoided = true;
+    payment.voidedAt = new Date().toISOString();
+    payment.voidReason = reason;
+    payment.status = 'Voided';
+    const invoice = this.invoices.find(i => i.id === payment.invoiceId);
+    if (invoice) {
+      invoice.paidAmount -= payment.amount;
+      invoice.outstandingAmount = Math.min(invoice.netAmount, invoice.outstandingAmount + payment.amount);
+      invoice.paymentStatus = invoice.outstandingAmount >= invoice.netAmount ? 'UNPAID' : 'PARTIALLY_PAID';
+    }
+    return payment;
+  }
+
+  // ── Academic Sessions ───────────────────────────
   createSession(data: { schoolId: string; name: string; startDate: string; endDate: string }) {
     const session = { id: freshId('session'), schoolId: data.schoolId, name: data.name, startDate: data.startDate, endDate: data.endDate, status: 'Active' };
     this.academicSessions.push(session);
@@ -234,20 +328,95 @@ class InMemoryStore {
     return { school, user };
   }
 
-  voidPayment(paymentId: string, reason: string) {
-    const payment = this.payments.find(p => p.id === paymentId);
-    if (!payment || payment.isVoided) return null;
-    payment.isVoided = true;
-    payment.voidedAt = new Date().toISOString();
-    payment.voidReason = reason;
-    payment.status = 'Voided';
-    const invoice = this.invoices.find(i => i.id === payment.invoiceId);
-    if (invoice) {
-      invoice.paidAmount -= payment.amount;
-      invoice.outstandingAmount = Math.min(invoice.netAmount, invoice.outstandingAmount + payment.amount);
-      invoice.paymentStatus = invoice.outstandingAmount >= invoice.netAmount ? 'UNPAID' : 'PARTIALLY_PAID';
+  // ── Audit Trail ─────────────────────────────────
+  appendAuditLog(action: string, entityType: string, entityId: string, oldValues: Record<string, unknown> | null, newValues: Record<string, unknown> | null, userId: string | null, schoolId: string | null) {
+    const log: AuditLog = {
+      id: freshId('audit'),
+      schoolId,
+      userId,
+      action,
+      entityType,
+      entityId,
+      oldValues: oldValues ? JSON.stringify(oldValues) : null,
+      newValues: newValues ? JSON.stringify(newValues) : null,
+      createdAt: new Date().toISOString(),
+    };
+    this.auditLogs.push(log);
+    return log;
+  }
+
+  getAuditLogs(schoolId: string, limit = 50) {
+    return this.auditLogs.filter(l => l.schoolId === schoolId).slice(-limit).reverse();
+  }
+
+  // ── School Settings ─────────────────────────────
+  getSchoolSettings(schoolId: string): SchoolSettings {
+    if (!this.schoolSettingsMap[schoolId]) {
+      const s = this.findSchoolById(schoolId);
+      this.schoolSettingsMap[schoolId] = {
+        schoolName: s?.name ?? '',
+        address: s?.address ?? '',
+        phone: '',
+        email: '',
+        currency: 'ETB',
+        timezone: 'Africa/Addis_Ababa',
+        receiptPrefix: 'REC',
+        receiptFooter: 'Thank you for your payment.',
+        minPartialPaymentAllowed: s?.minPartialPaymentAllowed ?? 500,
+        logoDataUrl: null,
+      };
     }
-    return payment;
+    return { ...this.schoolSettingsMap[schoolId] };
+  }
+
+  updateSchoolSettings(schoolId: string, data: Partial<SchoolSettings>) {
+    const current = this.getSchoolSettings(schoolId);
+    this.schoolSettingsMap[schoolId] = { ...current, ...data };
+    return this.schoolSettingsMap[schoolId];
+  }
+
+  // ── Notification Rules ──────────────────────────
+  getNotificationRules(schoolId: string) {
+    return this.notificationRules.filter(r => r.schoolId === schoolId);
+  }
+
+  createNotificationRule(data: { schoolId: string; name: string; trigger: string; delayDays: number; channels: string[] }) {
+    const rule: NotificationRule = {
+      id: freshId('rule'),
+      schoolId: data.schoolId,
+      name: data.name,
+      trigger: data.trigger,
+      delayDays: data.delayDays,
+      channels: data.channels,
+      active: true,
+    };
+    this.notificationRules.push(rule);
+    return rule;
+  }
+
+  evaluateNotificationRules(schoolId: string) {
+    const rules = this.notificationRules.filter(r => r.schoolId === schoolId && r.active);
+    const logs: NotificationLog[] = [];
+    for (const rule of rules) {
+      const overdueInvoices = this.invoices.filter(i =>
+        i.schoolId === schoolId &&
+        i.paymentStatus === 'UNPAID' &&
+        i.temporalStatus === 'OVERDUE'
+      );
+      for (const inv of overdueInvoices) {
+        const log: NotificationLog = {
+          id: freshId('nlog'),
+          schoolId,
+          ruleId: rule.id,
+          invoiceId: inv.id,
+          channels: rule.channels,
+          deliveredAt: new Date().toISOString(),
+        };
+        this.notificationLogs.push(log);
+        logs.push(log);
+      }
+    }
+    return logs;
   }
 }
 

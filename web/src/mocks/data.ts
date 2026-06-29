@@ -10,7 +10,20 @@ export const SEED = {
     { id: 'user-admin', schoolId: 'school-1', email: 'admin@nexasoft.sms', passwordHash: PASSWORD_HASH, firstName: 'Abebe', lastName: 'Kebede', role: 'ADMIN', status: 'Active', failedAttempts: 0, lockedUntil: null },
     { id: 'user-registrar', schoolId: 'school-1', email: 'registrar@nexasoft.sms', passwordHash: PASSWORD_HASH, firstName: 'Chaltu', lastName: 'Yosef', role: 'REGISTRAR', status: 'Active', failedAttempts: 0, lockedUntil: null },
     { id: 'user-accountant', schoolId: 'school-1', email: 'accountant@nexasoft.sms', passwordHash: PASSWORD_HASH, firstName: 'Tariku', lastName: 'Shiferaw', role: 'ACCOUNTANT', status: 'Active', failedAttempts: 0, lockedUntil: null },
+    { id: 'user-cashier', schoolId: 'school-1', email: 'cashier@nexasoft.sms', passwordHash: PASSWORD_HASH, firstName: 'Bekele', lastName: 'Molla', role: 'CASHIER', status: 'Active', failedAttempts: 0, lockedUntil: null },
     { id: 'user-parent', schoolId: 'school-1', email: 'parent@nexasoft.sms', passwordHash: PASSWORD_HASH, firstName: 'Tesfaye', lastName: 'Alemu', role: 'PARENT', status: 'Active', failedAttempts: 0, lockedUntil: null },
+  ],
+
+  // Household replaces direct parentUserId links on students
+  households: [
+    { id: 'hh-1', schoolId: 'school-1', name: 'Tesfaye Alemu', phone: '+251911223344', email: 'parent@nexasoft.sms', address: 'Kirkos Subcity, Kebele 02' },
+  ],
+
+  householdMembers: [
+    { id: 'hm-1', householdId: 'hh-1', userId: 'user-parent', studentId: null, role: 'PARENT' },
+    { id: 'hm-2', householdId: 'hh-1', userId: null, studentId: 'student-1', role: 'STUDENT' },
+    { id: 'hm-3', householdId: 'hh-1', userId: null, studentId: 'student-3', role: 'STUDENT' },
+    { id: 'hm-4', householdId: 'hh-1', userId: null, studentId: 'student-5', role: 'STUDENT' },
   ],
 
   academicSessions: [
@@ -37,7 +50,7 @@ export const SEED = {
   ],
 
   students: [
-    { id: 'student-1', schoolId: 'school-1', studentId: 'SCH-2026-0001', firstName: 'Almaz', lastName: 'Tesfaye', dateOfBirth: '2011-04-12', gender: 'FEMALE', guardianName: 'Tesfaye Alemu', guardianPhone: '+251911223344', guardianEmail: 'parent@nexasoft.sms', address: 'Kirkos Subcity, Kebele 02', previousSchool: null, status: 'ACTIVE', statusChangeReason: null, parentUserId: 'user-parent' },
+    { id: 'student-1', schoolId: 'school-1', studentId: 'SCH-2026-0001', firstName: 'Almaz', lastName: 'Tesfaye', dateOfBirth: '2011-04-12', gender: 'FEMALE', guardianName: 'Tesfaye Alemu', guardianPhone: '+251911223344', guardianEmail: 'parent@nexasoft.sms', address: 'Kirkos Subcity, Kebele 02', previousSchool: null, status: 'ACTIVE', statusChangeReason: null, parentUserId: null },
     { id: 'student-2', schoolId: 'school-1', studentId: 'SCH-2026-0002', firstName: 'Yonas', lastName: 'Bekele', dateOfBirth: '2017-08-23', gender: 'MALE', guardianName: 'Bekele Zewdu', guardianPhone: '+251912556677', guardianEmail: 'bekele@example.com', address: 'Yeka Subcity, House 901', previousSchool: null, status: 'ACTIVE', statusChangeReason: null, parentUserId: null },
     { id: 'student-3', schoolId: 'school-1', studentId: 'SCH-2026-0003', firstName: 'Hiwot', lastName: 'Desta', dateOfBirth: '2015-11-05', gender: 'FEMALE', guardianName: 'Desta Lemma', guardianPhone: '+251913334455', guardianEmail: 'desta@example.com', address: 'Bole Subcity, Woreda 03', previousSchool: 'Sunshine Elementary', status: 'ACTIVE', statusChangeReason: null, parentUserId: null },
     { id: 'student-4', schoolId: 'school-1', studentId: 'SCH-2026-0004', firstName: 'Abdi', lastName: 'Hussein', dateOfBirth: '2012-02-18', gender: 'MALE', guardianName: 'Hussein Ali', guardianPhone: '+251914445566', guardianEmail: 'hussein@example.com', address: 'Kazanches, House 45', previousSchool: null, status: 'ACTIVE', statusChangeReason: null, parentUserId: null },

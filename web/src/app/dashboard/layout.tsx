@@ -11,6 +11,7 @@ const ROLE_SEGMENT_MAP: Record<string, string> = {
   ADMIN: 'admin',
   REGISTRAR: 'registrar',
   ACCOUNTANT: 'accountant',
+  CASHIER: 'cashier',
   PARENT: 'parent',
 };
 

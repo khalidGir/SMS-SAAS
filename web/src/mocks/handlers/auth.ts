@@ -40,6 +40,7 @@ export const authHandlers = [
 
     const user = store.findUserByEmail(email);
     if (!user) {
+      store.appendAuditLog('LOGIN_FAILED', 'User', email, null, null, null, null);
       return HttpResponse.json(
         { status: 'error', error: { code: 'INVALID_CREDENTIALS', message: 'Invalid email or password' } },
         { status: 401 },
@@ -48,6 +49,8 @@ export const authHandlers = [
 
     const tokens = makeTokens(user.id, user.schoolId, user.role, user.email);
     const profile = userToProfile(user);
+
+    store.appendAuditLog('LOGIN_SUCCESS', 'User', user.id, null, { role: user.role }, user.id, user.schoolId);
 
     return HttpResponse.json({
       status: 'success',
@@ -114,6 +117,8 @@ export const authHandlers = [
       firstName, lastName, email,
     });
 
+    store.appendAuditLog('SCHOOL_REGISTERED', 'School', school.id, null, { schoolName, adminEmail: email }, user.id, school.id);
+
     const tokens = makeTokens(user.id, user.schoolId, user.role, user.email);
     const profile = {
       id: user.id, email: user.email,
@@ -137,7 +142,14 @@ export const authHandlers = [
     });
   }),
 
-  http.post('/api/v1/auth/logout', () => {
+  http.post('/api/v1/auth/logout', ({ request }) => {
+    const auth = request.headers.get('Authorization') || '';
+    if (auth.startsWith('Bearer ')) {
+      try {
+        const payload = JSON.parse(atob(auth.slice(7).split('.')[1]));
+        store.appendAuditLog('LOGOUT', 'User', payload.sub, null, null, payload.sub, payload.schoolId);
+      } catch { /* ignore */ }
+    }
     return HttpResponse.json({ status: 'success', message: 'Logged out' });
   }),
 ];

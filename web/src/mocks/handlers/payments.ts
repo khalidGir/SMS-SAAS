@@ -12,29 +12,6 @@ function resolveUser(request: Request) {
   }
 }
 
-function enrichInvoice(invoice: ReturnType<typeof store.findInvoiceById>) {
-  if (!invoice) return null;
-  const student = store.students.find(s => s.id === invoice.studentId);
-  const feeStructure = store.findFeeStructureById(invoice.feeStructureId);
-  const term = store.findTermById(invoice.termId);
-  const school = store.findSchoolById(invoice.schoolId);
-  const payments = store.findPaymentsByInvoice(invoice.id);
-  return {
-    ...invoice,
-    school: { minPartialPaymentAllowed: school?.minPartialPaymentAllowed ?? 0 },
-    student: student ? { firstName: student.firstName, lastName: student.lastName, studentId: student.studentId } : null,
-    feeStructure: feeStructure ? { name: feeStructure.name } : null,
-    term: term ? { name: term.name } : null,
-    payments: payments.map(p => ({
-      amount: p.amount,
-      paymentMethod: p.paymentMethod,
-      paymentDate: p.paymentDate,
-      status: p.status,
-      isVoided: p.isVoided,
-    })),
-  };
-}
-
 function enrichPayment(payment: ReturnType<typeof store.createPayment>) {
   if (!payment) return null;
   const invoice = store.findInvoiceById(payment.invoiceId);
@@ -63,15 +40,7 @@ function enrichPayment(payment: ReturnType<typeof store.createPayment>) {
   };
 }
 
-export const accountantHandlers = [
-  http.get('/api/v1/invoices', ({ request }) => {
-    const user = resolveUser(request);
-    if (!user) return HttpResponse.json({ status: 'error', error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } }, { status: 401 });
-    const schoolId = user.schoolId;
-    const invoices = schoolId ? store.findInvoicesBySchool(schoolId) : store.invoices;
-    return HttpResponse.json({ status: 'success', data: invoices.map(enrichInvoice).filter(Boolean) });
-  }),
-
+export const paymentHandlers = [
   http.get('/api/v1/payments', ({ request }) => {
     const user = resolveUser(request);
     if (!user) return HttpResponse.json({ status: 'error', error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } }, { status: 401 });
@@ -88,6 +57,9 @@ export const accountantHandlers = [
       return HttpResponse.json({ status: 'error', error: { code: 'VALIDATION_ERROR', message: 'Missing required fields' } }, { status: 422 });
     }
 
+    const oldInvoice = store.findInvoiceById(body.invoiceId);
+    const oldState = oldInvoice ? { paidAmount: oldInvoice.paidAmount, outstandingAmount: oldInvoice.outstandingAmount, paymentStatus: oldInvoice.paymentStatus } : null;
+
     const payment = store.createPayment({
       invoiceId: body.invoiceId,
       amount: body.amount,
@@ -101,8 +73,11 @@ export const accountantHandlers = [
     if (invoice) {
       invoice.paidAmount += body.amount;
       invoice.outstandingAmount = Math.max(0, invoice.netAmount - invoice.paidAmount);
-      invoice.paymentStatus = invoice.outstandingAmount <= 0 ? 'PAID' : 'PARTIALLY_PAID';
+      const newStatus = invoice.outstandingAmount <= 0 ? 'PAID' : 'PARTIALLY_PAID';
+      invoice.paymentStatus = newStatus;
     }
+
+    store.appendAuditLog('PAYMENT_RECORDED', 'Payment', payment.id, oldState, invoice ? { paidAmount: invoice.paidAmount, outstandingAmount: invoice.outstandingAmount, paymentStatus: invoice.paymentStatus } : null, user.id, user.schoolId);
 
     return HttpResponse.json({ status: 'success', data: enrichPayment(payment) });
   }),
@@ -119,6 +94,9 @@ export const accountantHandlers = [
     if (!payment) {
       return HttpResponse.json({ status: 'error', error: { code: 'NOT_FOUND', message: 'Payment not found or already voided' } }, { status: 404 });
     }
+
+    store.appendAuditLog('PAYMENT_VOIDED', 'Payment', paymentId, { status: 'Confirmed' }, { status: 'Voided', reason }, user.id, user.schoolId);
+
     return HttpResponse.json({ status: 'success', data: enrichPayment(payment) });
   }),
 ];

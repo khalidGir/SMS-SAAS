@@ -67,7 +67,7 @@ const Icons = {
   ),
 };
 
-const ALL_ROLES = ['SUPER_ADMIN', 'ADMIN', 'REGISTRAR', 'ACCOUNTANT', 'PARENT'] as const;
+const ALL_ROLES = ['SUPER_ADMIN', 'ADMIN', 'REGISTRAR', 'ACCOUNTANT', 'CASHIER', 'PARENT'] as const;
 
 const NAV_ITEMS: NavItem[] = [
   {
@@ -131,6 +131,12 @@ const NAV_ITEMS: NavItem[] = [
     icon: Icons.barChart,
   },
   {
+    label: 'Record Payment',
+    href: '/dashboard/cashier',
+    roles: ['CASHIER'],
+    icon: Icons.dollarSign,
+  },
+  {
     label: 'Invoices',
     href: '/dashboard/parent/invoices',
     roles: ['PARENT'],
@@ -149,6 +155,7 @@ const ROLE_BADGE_COLORS: Record<string, string> = {
   ADMIN: 'bg-blue-500/20 text-blue-300 ring-blue-500/30',
   REGISTRAR: 'bg-green-500/20 text-green-300 ring-green-500/30',
   ACCOUNTANT: 'bg-amber-500/20 text-amber-300 ring-amber-500/30',
+  CASHIER: 'bg-pink-500/20 text-pink-300 ring-pink-500/30',
   PARENT: 'bg-teal-500/20 text-teal-300 ring-teal-500/30',
 };
 
@@ -157,6 +164,7 @@ const ROLE_LABELS: Record<string, string> = {
   ADMIN: 'Admin',
   REGISTRAR: 'Registrar',
   ACCOUNTANT: 'Accountant',
+  CASHIER: 'Cashier',
   PARENT: 'Parent',
 };
 
