@@ -97,7 +97,7 @@ const NAV_ITEMS: NavItem[] = [
   {
     label: 'Students',
     href: '/dashboard/admin/students',
-    roles: ['ADMIN', 'REGISTRAR'],
+    roles: ['ADMIN'],
     icon: Icons.users,
   },
   {
@@ -105,6 +105,12 @@ const NAV_ITEMS: NavItem[] = [
     href: '/dashboard/registrar/register',
     roles: ['REGISTRAR'],
     icon: Icons.userPlus,
+  },
+  {
+    label: 'Students',
+    href: '/dashboard/registrar/students',
+    roles: ['REGISTRAR'],
+    icon: Icons.users,
   },
   {
     label: 'Enrollment',
