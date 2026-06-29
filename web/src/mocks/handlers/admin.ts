@@ -17,8 +17,14 @@ export const adminHandlers = [
     const user = resolveUser(request);
     if (!user) return HttpResponse.json({ status: 'error', error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } }, { status: 401 });
 
+    const url = new URL(request.url);
+    const statusFilter = url.searchParams.get('status');
+
     const schoolId = user.schoolId;
-    const students = schoolId ? store.findStudentsBySchool(schoolId) : store.students;
+    let students = schoolId ? store.findStudentsBySchool(schoolId) : store.students;
+    if (statusFilter) {
+      students = students.filter(s => s.status === statusFilter);
+    }
     const result = students.map(s => {
       const enrollments = store.findEnrollmentsByStudent(s.id);
       return {

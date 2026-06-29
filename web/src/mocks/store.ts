@@ -188,6 +188,10 @@ class InMemoryStore {
     return this.enrollments.filter(e => e.studentId === studentId);
   }
 
+  findStudentById(id: string) {
+    return this.students.find(s => s.id === id) || null;
+  }
+
   findStudentsBySchool(schoolId: string) {
     return this.students.filter(s => s.schoolId === schoolId);
   }

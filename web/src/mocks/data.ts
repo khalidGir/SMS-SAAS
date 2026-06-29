@@ -2,7 +2,9 @@ const PASSWORD_HASH = '';
 
 export const SEED = {
   schools: [
-    { id: 'school-1', name: 'NexaSoft Academy (Addis Ababa)', address: 'Bole Road, Addis Ababa, Ethiopia', minPartialPaymentAllowed: 500.00 },
+    { id: 'school-1', name: 'NexaSoft Academy (Addis Ababa)', domain: 'nexasoftacademy.edu', address: 'Bole Road, Addis Ababa, Ethiopia', phone: '+251-11-555-0100', email: 'info@nexasoftacademy.edu', planType: 'PREMIUM', status: 'ACTIVE', userCount: 5, createdAt: '2025-09-15T08:00:00Z', minPartialPaymentAllowed: 500.00 },
+    { id: 'school-2', name: 'Bright Future School', domain: 'brightfuture.et', address: 'Mexico Square, Addis Ababa, Ethiopia', phone: '+251-11-554-0200', email: 'contact@brightfuture.et', planType: 'STANDARD', status: 'ACTIVE', userCount: 2, createdAt: '2026-01-10T09:00:00Z', minPartialPaymentAllowed: 300.00 },
+    { id: 'school-3', name: 'Sunrise International School', domain: 'sunriseint.com', address: 'Piassa, Addis Ababa, Ethiopia', phone: '+251-11-553-0300', email: 'info@sunriseint.com', planType: 'BASIC', status: 'SUSPENDED', userCount: 0, createdAt: '2025-06-01T10:00:00Z', minPartialPaymentAllowed: 0 },
   ],
 
   users: [

@@ -8,6 +8,7 @@ import { analyticsHandlers } from './handlers/analytics';
 import { reportHandlers } from './handlers/reports';
 import { notificationHandlers } from './handlers/notifications';
 import { settingsHandlers } from './handlers/settings';
+import { auditHandlers } from './handlers/audit';
 
 export const worker = setupWorker(
   ...authHandlers,
@@ -19,4 +20,5 @@ export const worker = setupWorker(
   ...reportHandlers,
   ...notificationHandlers,
   ...settingsHandlers,
+  ...auditHandlers,
 );

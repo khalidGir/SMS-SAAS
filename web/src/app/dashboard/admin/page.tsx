@@ -1,11 +1,22 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useDashboardData } from '@/hooks/useDashboardData';
+import { useApi } from '@/hooks/useApi';
 import MetricCard from '@/components/shared/MetricCard';
-import EmptyState from '@/components/shared/EmptyState';
-import { cn, formatCurrency } from '@/lib/utils';
+import { cn, formatCurrency, formatDate } from '@/lib/utils';
 import Link from 'next/link';
+
+interface AuditLogEntry {
+  id: string;
+  action: string;
+  entityType: string;
+  entityId: string;
+  createdAt: string;
+  userName: string;
+  userRole: string | null;
+}
 
 const quickActions = [
   {
@@ -29,24 +40,39 @@ const quickActions = [
     ),
   },
   {
-    label: 'Reports Hub',
-    href: '/dashboard/accountant/reports',
+    label: 'Settings',
+    href: '/dashboard/admin/settings',
     color: 'bg-amber-50 text-amber-700 ring-amber-600/20',
     icon: (
       <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
       </svg>
     ),
   },
 ];
 
+const actionLabel = (action: string) => {
+  const map: Record<string, string> = {
+    LOGIN_SUCCESS: 'Login', LOGIN_FAILED: 'Failed login', LOGOUT: 'Logout',
+    PAYMENT_RECORDED: 'Payment recorded', PAYMENT_VOIDED: 'Payment voided',
+    PAYMENT_CONFIRMED: 'Payment confirmed', SETTINGS_UPDATED: 'Settings updated',
+    SCHOOL_REGISTERED: 'School registered',
+  };
+  return map[action] || action;
+};
+
 export default function AdminDashboard() {
   const { user } = useAuth();
   const { analytics, loading, error, refresh } = useDashboardData();
+  const { data: auditLogs, request: fetchAuditLogs } = useApi<AuditLogEntry[]>();
+
+  useEffect(() => {
+    fetchAuditLogs('GET', '/api/v1/audit-logs?limit=10');
+  }, [fetchAuditLogs]);
 
   return (
     <div className="p-6">
-      {/* Page header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">
           {user?.schoolName || 'Dashboard'}
@@ -57,7 +83,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Metrics */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
         <MetricCard
           label="Active Students"
           value={analytics?.activeStudentCount ?? '—'}
@@ -84,8 +110,8 @@ export default function AdminDashboard() {
           skeletonWidth="w-1/2"
         />
         <MetricCard
-          label="Total Collected"
-          value={analytics ? formatCurrency(analytics.totalCollected) : '—'}
+          label="Outstanding Fees"
+          value={analytics ? formatCurrency(analytics.totalOutstandingFees) : '—'}
           icon={
             <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -94,12 +120,39 @@ export default function AdminDashboard() {
           loading={loading}
           error={error}
           onRetry={refresh}
-          trend={
-            analytics && analytics.totalCollected > 0
-              ? { label: 'Total revenue this period', positive: true }
-              : undefined
-          }
           skeletonWidth="w-3/4"
+        />
+        <MetricCard
+          label="Active Invoices"
+          value={analytics?.activeInvoiceCount ?? '—'}
+          icon={
+            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+          }
+          loading={loading}
+          error={error}
+          onRetry={refresh}
+          skeletonWidth="w-1/3"
+        />
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+        <MetricCard
+          label="Total Collected"
+          value={analytics ? formatCurrency(analytics.totalCollected) : '—'}
+          loading={loading}
+          error={error}
+          onRetry={refresh}
+          trend={analytics && analytics.totalCollected > 0 ? { label: 'Revenue this period', positive: true } : undefined}
+        />
+        <MetricCard
+          label="Collection Rate"
+          value={analytics?.collectionRate != null ? `${analytics.collectionRate}%` : '—'}
+          loading={loading}
+          error={error}
+          onRetry={refresh}
+          trend={analytics?.collectionRate != null ? { label: `${analytics.collectionRate}% of total billed`, positive: analytics.collectionRate >= 50 } : undefined}
         />
       </div>
 
@@ -131,15 +184,23 @@ export default function AdminDashboard() {
           Recent Activity
         </h2>
         <div className="rounded-xl border border-gray-200/80 bg-white shadow-sm">
-          <EmptyState
-            icon={
-              <svg className="h-8 w-8 text-violet-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            }
-            title="No recent activity"
-            description="Activity log will appear here as actions are taken."
-          />
+          {auditLogs && auditLogs.length > 0 ? (
+            <ul className="divide-y divide-gray-100">
+              {auditLogs.map(log => (
+                <li key={log.id} className="flex items-start justify-between gap-2 px-4 py-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">{log.userName}</p>
+                    <p className="text-xs text-gray-500">{actionLabel(log.action)} — {log.entityType}</p>
+                  </div>
+                  <span className="shrink-0 text-xs text-gray-400">{formatDate(log.createdAt)}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="px-4 py-8 text-center">
+              <p className="text-sm text-gray-400">No recent activity</p>
+            </div>
+          )}
         </div>
       </section>
     </div>

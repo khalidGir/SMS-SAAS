@@ -3,16 +3,18 @@
 import { useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
+import { useDashboardData } from '@/hooks/useDashboardData';
 import { useApi } from '@/hooks/useApi';
 import MetricCard from '@/components/shared/MetricCard';
 import StatusBadge from '@/components/shared/StatusBadge';
 import Skeleton from '@/components/shared/Skeleton';
 import type { ParentStudentData, InvoiceData } from '@/lib/validations/schemas';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, formatDate } from '@/lib/utils';
 import { ANIMATIONS } from '@/lib/animations';
 
 export default function ParentDashboard() {
   const { user } = useAuth();
+  const { analytics } = useDashboardData();
   const { data: students, loading: studentsLoading, request: fetchStudents } = useApi<ParentStudentData[]>();
   const { data: invoices, loading: invoicesLoading, request: fetchInvoices } = useApi<InvoiceData[]>();
 
@@ -27,6 +29,10 @@ export default function ParentDashboard() {
   const totalPaid = invoices?.reduce((s, inv) => s + inv.paidAmount, 0) ?? 0;
   const loading = studentsLoading || invoicesLoading;
 
+  const daysUntilDue = analytics?.nextDueDate
+    ? Math.max(0, Math.ceil((new Date(analytics.nextDueDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+    : null;
+
   return (
     <div className="p-6">
       <div className="mb-6">
@@ -34,7 +40,7 @@ export default function ParentDashboard() {
         <p className="mt-1 text-sm text-gray-500">Welcome, {user?.name ?? 'Parent'}.</p>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
         <MetricCard
           label="Total Outstanding"
           value={formatCurrency(totalOutstanding)}
@@ -67,6 +73,18 @@ export default function ParentDashboard() {
           }
           loading={loading}
           skeletonWidth="w-1/3"
+        />
+        <MetricCard
+          label="Upcoming Due"
+          value={daysUntilDue != null ? `${daysUntilDue}d` : '—'}
+          icon={
+            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          }
+          loading={loading}
+          skeletonWidth="w-1/4"
+          trend={analytics?.nextDueAmount ? { label: `${formatCurrency(analytics.nextDueAmount)} due`, positive: false } : undefined}
         />
       </div>
 
