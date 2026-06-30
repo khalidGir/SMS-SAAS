@@ -356,6 +356,52 @@ class InMemoryStore {
     return student;
   }
 
+  // ── Fee Structures ────────────────────────────
+  createFeeStructure(data: {
+    schoolId: string; termId: string; name: string;
+    baseAmount: number; dueDate: string;
+    lateFeeRate: number; lateFeeType: string;
+    frequency: string; status: string;
+  }) {
+    const fee = {
+      id: freshId('fee'),
+      schoolId: data.schoolId,
+      termId: data.termId,
+      name: data.name,
+      baseAmount: data.baseAmount,
+      dueDate: data.dueDate,
+      lateFeeRate: data.lateFeeRate,
+      lateFeeType: data.lateFeeType,
+      frequency: data.frequency,
+      status: data.status || 'Active',
+    };
+    this.feeStructures.push(fee);
+    return fee;
+  }
+
+  updateFeeStructure(id: string, data: Partial<{
+    name: string; termId: string;
+    baseAmount: number; dueDate: string;
+    lateFeeRate: number; lateFeeType: string;
+    frequency: string; status: string;
+  }>) {
+    const fee = this.feeStructures.find(f => f.id === id);
+    if (!fee) return null;
+    Object.assign(fee, data);
+    return fee;
+  }
+
+  deleteFeeStructure(id: string) {
+    const fee = this.feeStructures.find(f => f.id === id);
+    if (!fee) return null;
+    fee.status = 'Inactive';
+    return fee;
+  }
+
+  findFeeStructuresBySchool(schoolId: string) {
+    return this.feeStructures.filter(f => f.schoolId === schoolId);
+  }
+
   createSchoolWithAdmin(data: {
     schoolName: string;
     address: string;

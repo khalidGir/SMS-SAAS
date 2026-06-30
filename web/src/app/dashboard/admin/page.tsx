@@ -5,8 +5,10 @@ import { useAuth } from '@/hooks/useAuth';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import { useApi } from '@/hooks/useApi';
 import MetricCard from '@/components/shared/MetricCard';
-import { cn, formatCurrency, formatDate } from '@/lib/utils';
-import Link from 'next/link';
+import { formatCurrency, formatDate } from '@/lib/utils';
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
+} from 'recharts';
 
 interface AuditLogEntry {
   id: string;
@@ -17,40 +19,6 @@ interface AuditLogEntry {
   userName: string;
   userRole: string | null;
 }
-
-const quickActions = [
-  {
-    label: 'New Session',
-    href: '/dashboard/admin/sessions',
-    color: 'bg-violet-50 text-violet-700 ring-violet-600/20',
-    icon: (
-      <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-      </svg>
-    ),
-  },
-  {
-    label: 'Manage Students',
-    href: '/dashboard/admin/students',
-    color: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
-    icon: (
-      <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197" />
-      </svg>
-    ),
-  },
-  {
-    label: 'Settings',
-    href: '/dashboard/admin/settings',
-    color: 'bg-amber-50 text-amber-700 ring-amber-600/20',
-    icon: (
-      <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-      </svg>
-    ),
-  },
-];
 
 const actionLabel = (action: string) => {
   const map: Record<string, string> = {
@@ -71,6 +39,8 @@ export default function AdminDashboard() {
     fetchAuditLogs('GET', '/api/v1/audit-logs?limit=10');
   }, [fetchAuditLogs]);
 
+  const chartData = analytics?.monthlyBreakdown ?? [];
+
   return (
     <div className="p-6">
       <div className="mb-6">
@@ -82,8 +52,36 @@ export default function AdminDashboard() {
         </p>
       </div>
 
-      {/* Metrics */}
+      {/* Row 1: 4 Primary MetricCards */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+        <MetricCard
+          label="Collection Efficiency"
+          value={analytics?.collectionRate != null ? `${analytics.collectionRate}%` : '—'}
+          icon={
+            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+          }
+          loading={loading}
+          error={error}
+          onRetry={refresh}
+          trend={analytics?.collectionRate != null
+            ? { label: `${analytics.collectionRate}% of total billed`, positive: analytics.collectionRate >= 50 }
+            : undefined}
+        />
+        <MetricCard
+          label="Outstanding Receivables"
+          value={analytics ? formatCurrency(analytics.totalOutstandingFees) : '—'}
+          icon={
+            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          }
+          loading={loading}
+          error={error}
+          onRetry={refresh}
+          skeletonWidth="w-3/4"
+        />
         <MetricCard
           label="Active Students"
           value={analytics?.activeStudentCount ?? '—'}
@@ -95,6 +93,7 @@ export default function AdminDashboard() {
           loading={loading}
           error={error}
           onRetry={refresh}
+          trend={analytics ? { label: `${analytics.activeStudentCount} enrolled`, positive: true } : undefined}
         />
         <MetricCard
           label="Pending Admissions"
@@ -109,76 +108,41 @@ export default function AdminDashboard() {
           onRetry={refresh}
           skeletonWidth="w-1/2"
         />
-        <MetricCard
-          label="Outstanding Fees"
-          value={analytics ? formatCurrency(analytics.totalOutstandingFees) : '—'}
-          icon={
-            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          }
-          loading={loading}
-          error={error}
-          onRetry={refresh}
-          skeletonWidth="w-3/4"
-        />
-        <MetricCard
-          label="Active Invoices"
-          value={analytics?.activeInvoiceCount ?? '—'}
-          icon={
-            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-            </svg>
-          }
-          loading={loading}
-          error={error}
-          onRetry={refresh}
-          skeletonWidth="w-1/3"
-        />
       </div>
 
-      <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-        <MetricCard
-          label="Total Collected"
-          value={analytics ? formatCurrency(analytics.totalCollected) : '—'}
-          loading={loading}
-          error={error}
-          onRetry={refresh}
-          trend={analytics && analytics.totalCollected > 0 ? { label: 'Revenue this period', positive: true } : undefined}
-        />
-        <MetricCard
-          label="Collection Rate"
-          value={analytics?.collectionRate != null ? `${analytics.collectionRate}%` : '—'}
-          loading={loading}
-          error={error}
-          onRetry={refresh}
-          trend={analytics?.collectionRate != null ? { label: `${analytics.collectionRate}% of total billed`, positive: analytics.collectionRate >= 50 } : undefined}
-        />
-      </div>
-
-      {/* Quick Actions */}
+      {/* Row 2: Billed vs Collected Chart */}
       <section className="mt-8">
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-gray-500">
-          Quick Actions
+          Billed vs Collected
         </h2>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          {quickActions.map((action) => (
-            <Link
-              key={action.href}
-              href={action.href}
-              className={cn(
-                'flex items-center gap-3 rounded-xl border border-gray-200/80 px-4 py-3.5 text-sm font-medium shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-0.5',
-                action.color,
-              )}
-            >
-              {action.icon}
-              {action.label}
-            </Link>
-          ))}
+        <div className="rounded-xl border border-gray-200/80 bg-white p-5 shadow-sm">
+          {chartData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart data={chartData} barCategoryGap="20%">
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis dataKey="month" tick={{ fontSize: 12, fill: '#6b7280' }} />
+                <YAxis tick={{ fontSize: 12, fill: '#6b7280' }} />
+                <Tooltip
+                  contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb', fontSize: '12px' }}
+                />
+                <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} />
+                <Bar dataKey="billed" name="Billed Fees" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="collected" name="Collected Cash" fill="#10b981" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : loading ? (
+            <div className="flex h-[280px] items-center justify-center">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-violet-600 border-t-transparent" />
+            </div>
+          ) : (
+            <div className="flex h-[280px] items-center justify-center">
+              <p className="text-sm text-gray-400">No billing data available</p>
+            </div>
+          )}
         </div>
       </section>
 
-      {/* Recent Activity */}
+      {/* Row 3: Recent Activity */}
       <section className="mt-8">
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-gray-500">
           Recent Activity

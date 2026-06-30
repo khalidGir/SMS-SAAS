@@ -54,6 +54,8 @@ export interface DashboardAnalytics {
     '61-90': number;
     '90+': number;
   };
+  // ADMIN / ACCOUNTANT — monthly breakdown
+  monthlyBreakdown?: { month: string; billed: number; collected: number }[];
   // PARENT
   upcomingDueCount?: number;
   nextDueDate?: string | null;

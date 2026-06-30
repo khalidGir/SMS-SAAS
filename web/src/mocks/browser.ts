@@ -9,6 +9,7 @@ import { reportHandlers } from './handlers/reports';
 import { notificationHandlers } from './handlers/notifications';
 import { settingsHandlers } from './handlers/settings';
 import { auditHandlers } from './handlers/audit';
+import { feeHandlers } from './handlers/fees';
 
 export const worker = setupWorker(
   ...authHandlers,
@@ -21,4 +22,5 @@ export const worker = setupWorker(
   ...notificationHandlers,
   ...settingsHandlers,
   ...auditHandlers,
+  ...feeHandlers,
 );

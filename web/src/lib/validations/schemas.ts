@@ -262,6 +262,33 @@ export interface ParentPaymentResult {
   };
 }
 
+// ── Fee Structure (FR-006) ────────────────────────────────
+export const feeStructureSchema = z.object({
+  name: z.string().min(1, 'Name is required').max(255),
+  termId: z.string().min(1, 'Term is required'),
+  baseAmount: z.number({ message: 'Amount must be a number' }).positive('Amount must be positive'),
+  dueDate: z.string().refine((val) => !isNaN(Date.parse(val)), { message: 'Valid date is required' }),
+  lateFeeRate: z.number({ message: 'Rate must be a number' }).nonnegative('Rate cannot be negative'),
+  lateFeeType: z.enum(['FLAT', 'DAILY'], { message: 'Select a late fee type' }),
+  frequency: z.enum(['Termly', 'Monthly', 'Yearly', 'One-Time'], { message: 'Select frequency' }),
+  status: z.enum(['Active', 'Inactive']),
+});
+export type FeeStructureInput = z.infer<typeof feeStructureSchema>;
+
+export interface FeeStructureData {
+  id: string;
+  schoolId: string;
+  termId: string;
+  name: string;
+  baseAmount: number;
+  dueDate: string;
+  lateFeeRate: number;
+  lateFeeType: 'FLAT' | 'DAILY';
+  frequency: string;
+  status: string;
+  term?: { id: string; name: string };
+}
+
 export interface InvoiceWithPayments extends InvoiceData {
   payments: {
     amount: number;

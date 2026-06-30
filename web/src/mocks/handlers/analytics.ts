@@ -86,8 +86,8 @@ export const analyticsHandlers = [
       data.maleFemaleRatio = femaleCount > 0 ? Math.round((maleCount / femaleCount) * 10) / 10 : maleCount;
     }
 
-    // ── ACCOUNTANT ─────────────────────────────────
-    if (user.role === 'ACCOUNTANT') {
+    // ── FINANCIAL DEEP METRICS (ADMIN + ACCOUNTANT) ─
+    if (user.role === 'ADMIN' || user.role === 'ACCOUNTANT') {
       const totalBilled = invoices.reduce((sum, inv) => sum + inv.netAmount, 0);
       data.collectionRate = totalBilled > 0 ? Math.round((totalCollected / totalBilled) * 10000) / 100 : 0;
       data.overdueCount = invoices.filter(i => i.temporalStatus === 'OVERDUE').length;
@@ -114,6 +114,22 @@ export const analyticsHandlers = [
         else agingBuckets['90+'] += inv.outstandingAmount;
       }
       data.agingBuckets = agingBuckets;
+
+      // Monthly breakdown: group invoices by issuedDate month, payments by paymentDate month
+      const monthMap: Record<string, { billed: number; collected: number }> = {};
+      for (const inv of invoices) {
+        const m = inv.issuedDate.slice(0, 7);
+        if (!monthMap[m]) monthMap[m] = { billed: 0, collected: 0 };
+        monthMap[m].billed += inv.netAmount;
+      }
+      for (const p of schoolPayments.filter(p => p.status === 'Confirmed' && !p.isVoided)) {
+        const m = p.paymentDate.slice(0, 7);
+        if (!monthMap[m]) monthMap[m] = { billed: 0, collected: 0 };
+        monthMap[m].collected += p.amount;
+      }
+      data.monthlyBreakdown = Object.entries(monthMap)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([month, vals]) => ({ month, ...vals }));
     }
 
     // ── CASHIER ────────────────────────────────────
