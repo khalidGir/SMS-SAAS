@@ -164,6 +164,30 @@ class InMemoryStore {
     return this.classes.find(c => c.id === id) || null;
   }
 
+  findClassesBySchool(schoolId: string) {
+    return this.classes.filter(c => c.schoolId === schoolId);
+  }
+
+  createClass(data: { schoolId: string; name: string; capacity: number }) {
+    const cls = { id: freshId('class'), schoolId: data.schoolId, name: data.name, capacity: data.capacity };
+    this.classes.push(cls);
+    return cls;
+  }
+
+  updateClass(id: string, data: { name?: string; capacity?: number }) {
+    const cls = this.classes.find(c => c.id === id);
+    if (!cls) return null;
+    Object.assign(cls, data);
+    return cls;
+  }
+
+  deleteClass(id: string) {
+    const idx = this.classes.findIndex(c => c.id === id);
+    if (idx === -1) return null;
+    const [removed] = this.classes.splice(idx, 1);
+    return removed;
+  }
+
   findSessionById(id: string) {
     return this.academicSessions.find(s => s.id === id) || null;
   }
@@ -488,6 +512,27 @@ class InMemoryStore {
   // ── Notification Rules ──────────────────────────
   getNotificationRules(schoolId: string) {
     return this.notificationRules.filter(r => r.schoolId === schoolId);
+  }
+
+  updateNotificationRule(id: string, data: { name?: string; trigger?: string; delayDays?: number; channels?: string[]; active?: boolean }) {
+    const rule = this.notificationRules.find(r => r.id === id);
+    if (!rule) return null;
+    Object.assign(rule, data);
+    return rule;
+  }
+
+  deleteNotificationRule(id: string) {
+    const idx = this.notificationRules.findIndex(r => r.id === id);
+    if (idx === -1) return null;
+    const [removed] = this.notificationRules.splice(idx, 1);
+    return removed;
+  }
+
+  updateHousehold(id: string, data: { phone?: string; address?: string; email?: string }) {
+    const household = this.households.find(h => h.id === id);
+    if (!household) return null;
+    Object.assign(household, data);
+    return household;
   }
 
   createNotificationRule(data: { schoolId: string; name: string; trigger: string; delayDays: number; channels: string[] }) {

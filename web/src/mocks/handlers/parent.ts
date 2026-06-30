@@ -63,6 +63,17 @@ function enrichPayment(payment: ReturnType<typeof store.createPayment>) {
   };
 }
 
+function findHousehold(request: Request) {
+  const auth = request.headers.get('Authorization') || '';
+  if (!auth.startsWith('Bearer ')) return null;
+  try {
+    const payload = JSON.parse(atob(auth.slice(7).split('.')[1]));
+    const user = store.findUserById(payload.sub);
+    if (!user) return null;
+    return store.findHouseholdByUserId(user.id);
+  } catch { return null; }
+}
+
 export const parentHandlers = [
   http.get('/api/v1/parent/students', ({ request }) => {
     const user = resolveUser(request);
@@ -104,6 +115,28 @@ export const parentHandlers = [
       .filter(i => i.paymentStatus !== 'VOIDED');
 
     return HttpResponse.json({ status: 'success', data: invoices.map(enrichInvoice).filter(Boolean) });
+  }),
+
+  http.get('/api/v1/parent/profile', ({ request }) => {
+    const household = findHousehold(request);
+    if (!household) return HttpResponse.json({ status: 'error', error: { code: 'NOT_FOUND', message: 'Household not found' } }, { status: 404 });
+
+    return HttpResponse.json({ status: 'success', data: { phone: household.phone ?? '', address: household.address ?? '' } });
+  }),
+
+  http.put('/api/v1/parent/profile', async ({ request }) => {
+    const auth = request.headers.get('Authorization') || '';
+    if (!auth.startsWith('Bearer ')) return HttpResponse.json({ status: 'error', error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } }, { status: 401 });
+    const payload = JSON.parse(atob(auth.slice(7).split('.')[1]));
+    const user = store.findUserById(payload.sub);
+    if (!user) return HttpResponse.json({ status: 'error', error: { code: 'UNAUTHORIZED', message: 'User not found' } }, { status: 401 });
+
+    const household = store.findHouseholdByUserId(user.id);
+    if (!household) return HttpResponse.json({ status: 'error', error: { code: 'NOT_FOUND', message: 'Household not found' } }, { status: 404 });
+
+    const body = (await request.json()) as { phone?: string; address?: string };
+    const updated = store.updateHousehold(household.id, { phone: body.phone, address: body.address });
+    return HttpResponse.json({ status: 'success', data: { phone: updated!.phone, address: updated!.address } });
   }),
 
   http.post('/api/v1/parent/payments', async ({ request }) => {

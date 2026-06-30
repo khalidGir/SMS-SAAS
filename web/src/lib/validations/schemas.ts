@@ -262,6 +262,21 @@ export interface ParentPaymentResult {
   };
 }
 
+// ── Class ─────────────────────────────────────────────────
+export const classSchema = z.object({
+  name: z.string().min(1, 'Class name is required').max(255),
+  capacity: z.number({ message: 'Capacity must be a number' }).int().positive('Capacity must be at least 1'),
+});
+export type ClassInput = z.infer<typeof classSchema>;
+
+export interface ClassData {
+  id: string;
+  schoolId: string;
+  name: string;
+  capacity: number;
+  enrolledCount?: number;
+}
+
 // ── Fee Structure (FR-006) ────────────────────────────────
 export const feeStructureSchema = z.object({
   name: z.string().min(1, 'Name is required').max(255),

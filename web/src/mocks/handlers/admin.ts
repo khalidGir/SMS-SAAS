@@ -123,8 +123,65 @@ export const adminHandlers = [
     if (!user) return HttpResponse.json({ status: 'error', error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } }, { status: 401 });
 
     const schoolId = user.schoolId;
-    const classes = schoolId ? store.classes.filter(c => c.schoolId === schoolId) : store.classes;
-    return HttpResponse.json({ status: 'success', data: classes });
+    const classes = schoolId ? store.findClassesBySchool(schoolId) : store.classes;
+    const enriched = classes.map(c => ({
+      ...c,
+      enrolledCount: store.enrollments.filter(e => e.classId === c.id && e.status === 'Active').length,
+    }));
+    return HttpResponse.json({ status: 'success', data: enriched });
+  }),
+
+  http.post('/api/v1/classes', async ({ request }) => {
+    const user = resolveUser(request);
+    if (!user) return HttpResponse.json({ status: 'error', error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } }, { status: 401 });
+
+    const body = (await request.json()) as { name?: string; capacity?: number };
+    if (!body.name || body.capacity == null) {
+      return HttpResponse.json({ status: 'error', error: { code: 'VALIDATION_ERROR', message: 'Name and capacity are required' } }, { status: 422 });
+    }
+
+    const cls = store.createClass({
+      schoolId: user.schoolId,
+      name: body.name,
+      capacity: body.capacity,
+    });
+
+    store.appendAuditLog('CLASS_CREATED', 'Class', cls.id, null, { name: cls.name }, user.id, user.schoolId);
+    return HttpResponse.json({ status: 'success', data: cls }, { status: 201 });
+  }),
+
+  http.put('/api/v1/classes/:id', async ({ params, request }) => {
+    const user = resolveUser(request);
+    if (!user) return HttpResponse.json({ status: 'error', error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } }, { status: 401 });
+
+    const body = (await request.json()) as { name?: string; capacity?: number };
+    const cls = store.updateClass(params.id as string, body);
+    if (!cls) {
+      return HttpResponse.json({ status: 'error', error: { code: 'NOT_FOUND', message: 'Class not found' } }, { status: 404 });
+    }
+
+    store.appendAuditLog('CLASS_UPDATED', 'Class', cls.id, null, { name: cls.name }, user.id, user.schoolId);
+    return HttpResponse.json({ status: 'success', data: cls });
+  }),
+
+  http.delete('/api/v1/classes/:id', ({ params, request }) => {
+    const user = resolveUser(request);
+    if (!user) return HttpResponse.json({ status: 'error', error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } }, { status: 401 });
+
+    const id = params.id as string;
+
+    const activeEnrollments = store.enrollments.filter(e => e.classId === id && e.status === 'Active');
+    if (activeEnrollments.length > 0) {
+      return HttpResponse.json({ status: 'error', error: { code: 'HAS_ENROLLMENTS', message: `Cannot delete class with ${activeEnrollments.length} active enrollment(s). Reassign or withdraw students first.` } }, { status: 409 });
+    }
+
+    const removed = store.deleteClass(id);
+    if (!removed) {
+      return HttpResponse.json({ status: 'error', error: { code: 'NOT_FOUND', message: 'Class not found' } }, { status: 404 });
+    }
+
+    store.appendAuditLog('CLASS_DELETED', 'Class', id, null, { name: removed.name }, user.id, user.schoolId);
+    return HttpResponse.json({ status: 'success', message: 'Class deleted' });
   }),
 
   http.get('/api/v1/enrollments', ({ request }) => {

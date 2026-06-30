@@ -14,12 +14,23 @@ export default function AdminStudentsPage() {
   const { data: students, loading, error, request: fetchStudents } = useApi<StudentData[]>();
   const [selectedStudent, setSelectedStudent] = useState<StudentData | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('ALL');
 
   const loadStudents = useCallback(() => {
     fetchStudents('GET', '/api/v1/students');
   }, [fetchStudents]);
 
   useEffect(() => { loadStudents(); }, [loadStudents]);
+
+  const filtered = (students ?? []).filter(s => {
+    if (statusFilter !== 'ALL' && s.status !== statusFilter) return false;
+    if (search) {
+      const q = search.toLowerCase();
+      if (!`${s.firstName} ${s.lastName} ${s.studentId}`.toLowerCase().includes(q)) return false;
+    }
+    return true;
+  });
 
   const columns: Column<StudentData>[] = [
     { key: 'studentId', label: 'ID', render: (s) => <span className="font-medium text-gray-900">{s.studentId}</span> },
@@ -62,9 +73,37 @@ export default function AdminStudentsPage() {
         <div className="mb-4 rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div>
       )}
 
+      <div className="mb-4 flex items-center gap-3">
+        <div className="relative max-w-xs flex-1">
+          <svg className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            type="text"
+            placeholder="Search name or ID..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full rounded-md border border-gray-300 py-2 pl-9 pr-3 text-sm shadow-sm focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+          />
+        </div>
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+        >
+          <option value="ALL">All Status</option>
+          <option value="ACTIVE">Active</option>
+          <option value="PENDING">Pending</option>
+          <option value="SUSPENDED">Suspended</option>
+          <option value="WITHDRAWN">Withdrawn</option>
+          <option value="EXPELLED">Expelled</option>
+          <option value="GRADUATED">Graduated</option>
+        </select>
+      </div>
+
       <DataTable
         columns={columns}
-        rows={students ?? []}
+        rows={filtered}
         loading={loading}
         emptyMessage="No students found."
       />

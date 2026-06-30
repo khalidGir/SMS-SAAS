@@ -1,8 +1,20 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import Toast from '@/components/shared/Toast';
+import DataTable, { type Column } from '@/components/shared/DataTable';
+import StatusBadge from '@/components/shared/StatusBadge';
+import NotificationRuleFormModal from '@/components/modules/academic/NotificationRuleFormModal';
+
+interface NotificationRule {
+  id: string;
+  name: string;
+  trigger: string;
+  delayDays: number;
+  channels: string[];
+  active: boolean;
+}
 
 interface SchoolSettings {
   schoolName: string;
@@ -23,6 +35,94 @@ export default function AdminSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  // ── Notification Rules ─────────────────────────────────
+  const [rules, setRules] = useState<NotificationRule[]>([]);
+  const [rulesLoading, setRulesLoading] = useState(true);
+  const [showRuleModal, setShowRuleModal] = useState(false);
+  const [ruleSaving, setRuleSaving] = useState(false);
+
+  const loadRules = useCallback(async () => {
+    setRulesLoading(true);
+    try {
+      const token = sessionStorage.getItem('accessToken');
+      const res = await fetch('/api/v1/notifications/rules', {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      const json = await res.json();
+      if (json.status === 'success') setRules(json.data);
+    } catch { /* ignore */ }
+    setRulesLoading(false);
+  }, []);
+
+  useEffect(() => { loadRules(); }, [loadRules]);
+
+  const handleCreateRule = async (data: { name: string; trigger: string; delayDays: number; channels: string[] }) => {
+    setRuleSaving(true);
+    try {
+      const token = sessionStorage.getItem('accessToken');
+      const res = await fetch('/api/v1/notifications/rules', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify(data),
+      });
+      const json = await res.json();
+      if (json.status === 'success') {
+        setToast({ message: 'Notification rule created.', type: 'success' });
+        setShowRuleModal(false);
+        loadRules();
+      } else {
+        setToast({ message: json?.error?.message || 'Failed to create', type: 'error' });
+      }
+    } catch { setToast({ message: 'Network error', type: 'error' }); }
+    finally { setRuleSaving(false); }
+  };
+
+  const handleToggleRule = async (rule: NotificationRule) => {
+    const token = sessionStorage.getItem('accessToken');
+    try {
+      const res = await fetch(`/api/v1/notifications/rules/${rule.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ active: !rule.active }),
+      });
+      const json = await res.json();
+      if (json.status === 'success') {
+        setToast({ message: `Rule ${rule.active ? 'deactivated' : 'activated'}.`, type: 'success' });
+        loadRules();
+      }
+    } catch { setToast({ message: 'Network error', type: 'error' }); }
+  };
+
+  const handleDeleteRule = async (rule: NotificationRule) => {
+    if (!window.confirm(`Delete "${rule.name}"?`)) return;
+    const token = sessionStorage.getItem('accessToken');
+    try {
+      const res = await fetch(`/api/v1/notifications/rules/${rule.id}`, {
+        method: 'DELETE',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      const json = await res.json();
+      if (json.status === 'success') {
+        setToast({ message: 'Rule deleted.', type: 'success' });
+        loadRules();
+      }
+    } catch { setToast({ message: 'Network error', type: 'error' }); }
+  };
+
+  const handleEvaluate = async () => {
+    const token = sessionStorage.getItem('accessToken');
+    try {
+      const res = await fetch('/api/v1/notifications/evaluate', {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      const json = await res.json();
+      if (json.status === 'success') {
+        setToast({ message: `Evaluation complete. ${json.data.triggered} notification(s) triggered.`, type: 'success' });
+      }
+    } catch { setToast({ message: 'Network error', type: 'error' }); }
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -183,6 +283,68 @@ export default function AdminSettingsPage() {
           </div>
         </section>
       </div>
+
+      {/* Notification Rules */}
+      <section className="mt-6 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-gray-900">Notification Rules</h2>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleEvaluate}
+              className="rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Evaluate Now
+            </button>
+            <button
+              onClick={() => setShowRuleModal(true)}
+              className="rounded-md bg-violet-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-violet-700"
+            >
+              + Add Rule
+            </button>
+          </div>
+        </div>
+        <div className="mt-4">
+          <DataTable
+            columns={[
+              { key: 'name', label: 'Name', render: (r: NotificationRule) => <span className="font-medium text-gray-900">{r.name}</span> },
+              { key: 'trigger', label: 'Trigger', render: (r: NotificationRule) => <span className="text-gray-600">{r.trigger.replace(/_/g, ' ')}</span> },
+              { key: 'delay', label: 'Delay', align: 'center', render: (r: NotificationRule) => <span className="text-gray-600">{r.delayDays}d</span> },
+              { key: 'channels', label: 'Channels', align: 'center', render: (r: NotificationRule) => <span className="text-gray-600">{r.channels.join(', ') || '—'}</span> },
+              { key: 'status', label: 'Status', align: 'center', render: (r: NotificationRule) => <StatusBadge status={r.active ? 'ACTIVE' : 'INACTIVE'} variant="lifecycle" /> },
+              {
+                key: 'actions', label: '', align: 'right',
+                render: (r: NotificationRule) => (
+                  <div className="flex items-center justify-end gap-2">
+                    <button
+                      onClick={() => handleToggleRule(r)}
+                      className={`rounded-md px-2.5 py-1 text-xs font-medium ${r.active ? 'bg-yellow-50 text-yellow-700 hover:bg-yellow-100' : 'bg-green-50 text-green-700 hover:bg-green-100'}`}
+                    >
+                      {r.active ? 'Deactivate' : 'Activate'}
+                    </button>
+                    <button
+                      onClick={() => handleDeleteRule(r)}
+                      className="rounded-md bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700 hover:bg-red-100"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                ),
+              },
+            ] as Column<NotificationRule>[]}
+            rows={rules}
+            loading={rulesLoading}
+            emptyMessage="No notification rules configured."
+          />
+        </div>
+      </section>
+
+      {showRuleModal && (
+        <NotificationRuleFormModal
+          saving={ruleSaving}
+          onSubmit={handleCreateRule}
+          onClose={() => setShowRuleModal(false)}
+        />
+      )}
 
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </div>
