@@ -4,10 +4,12 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
+import { useTranslation } from '@/hooks/useTranslation';
 import { cn } from '@/lib/utils';
 
 interface NavItem {
   label: string;
+  tKey: string;
   href: string;
   roles: string[];
   icon: React.ReactNode;
@@ -78,90 +80,105 @@ const ALL_ROLES = ['SUPER_ADMIN', 'ADMIN', 'REGISTRAR', 'ACCOUNTANT', 'CASHIER',
 const NAV_ITEMS: NavItem[] = [
   {
     label: 'Dashboard',
+    tKey: 'nav.dashboard',
     href: '/dashboard',
     roles: [...ALL_ROLES],
     icon: Icons.dashboard,
   },
   {
     label: 'Schools',
+    tKey: 'nav.schools',
     href: '/dashboard/super-admin/schools',
     roles: ['SUPER_ADMIN'],
     icon: Icons.school,
   },
   {
     label: 'Users',
+    tKey: 'nav.users',
     href: '/dashboard/super-admin/users',
     roles: ['SUPER_ADMIN'],
     icon: Icons.users,
   },
   {
     label: 'Sessions',
+    tKey: 'nav.sessions',
     href: '/dashboard/admin/sessions',
     roles: ['ADMIN'],
     icon: Icons.calendar,
   },
   {
     label: 'Classes',
+    tKey: 'nav.classes',
     href: '/dashboard/admin/classes',
     roles: ['ADMIN'],
     icon: Icons.academicCap,
   },
   {
     label: 'Students',
+    tKey: 'nav.students',
     href: '/dashboard/admin/students',
     roles: ['ADMIN'],
     icon: Icons.users,
   },
   {
     label: 'Register Student',
+    tKey: 'nav.registerStudent',
     href: '/dashboard/registrar/register',
     roles: ['REGISTRAR'],
     icon: Icons.userPlus,
   },
   {
     label: 'Students',
+    tKey: 'nav.students',
     href: '/dashboard/registrar/students',
     roles: ['REGISTRAR'],
     icon: Icons.users,
   },
   {
     label: 'Enrollment',
+    tKey: 'nav.enrollment',
     href: '/dashboard/registrar/enrollment',
     roles: ['REGISTRAR'],
     icon: Icons.clipboard,
   },
   {
     label: 'Fees',
+    tKey: 'nav.fees',
     href: '/dashboard/accountant/fees',
     roles: ['ACCOUNTANT'],
     icon: Icons.dollarSign,
   },
   {
     label: 'Invoices',
+    tKey: 'nav.invoices',
     href: '/dashboard/accountant/invoices',
     roles: ['ACCOUNTANT'],
     icon: Icons.fileText,
   },
   {
     label: 'Reports',
+    tKey: 'nav.reports',
     href: '/dashboard/accountant/reports',
     roles: ['ACCOUNTANT'],
     icon: Icons.barChart,
   },
   {
     label: 'Record Payment',
+    tKey: 'nav.recordPayment',
     href: '/dashboard/cashier',
     roles: ['CASHIER'],
     icon: Icons.dollarSign,
   },
   {
     label: 'Invoices',
+    tKey: 'nav.invoices',
     href: '/dashboard/parent/invoices',
     roles: ['PARENT'],
     icon: Icons.fileText,
   },
   {
     label: 'Profile',
+    tKey: 'nav.profile',
     href: '/dashboard/parent/profile',
     roles: ['PARENT'],
     icon: Icons.user,
@@ -187,6 +204,7 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 export default function SidebarNavigation() {
+  const { locale, setLocale, t } = useTranslation();
   const { user } = useAuth();
   const pathname = usePathname();
   const [expanded, setExpanded] = useState(false);
@@ -237,10 +255,10 @@ export default function SidebarNavigation() {
                       ? 'bg-violet-500/10 text-violet-300 ring-1 ring-inset ring-violet-500/20'
                       : 'text-gray-400 hover:bg-gray-800 hover:text-gray-200',
                   )}
-                  title={expanded ? undefined : item.label}
+                  title={expanded ? undefined : t(item.tKey)}
                 >
                   {item.icon}
-                  <span className={cn(expanded ? 'block' : 'hidden', 'lg:block')}>{item.label}</span>
+                  <span className={cn(expanded ? 'block' : 'hidden', 'lg:block')}>{t(item.tKey)}</span>
                 </Link>
               </li>
             );
@@ -248,9 +266,31 @@ export default function SidebarNavigation() {
         </ul>
       </nav>
 
-      {/* User footer */}
-      <div className="border-t border-gray-800 px-4 py-3">
-        <div className="flex items-center gap-3">
+      {/* Language toggle + User footer */}
+      <div className="border-t border-gray-800">
+        <div className={cn('flex items-center gap-1 border-b border-gray-700/50 px-4 py-2', expanded ? 'justify-end' : 'justify-center', 'lg:justify-end')}>
+          <button
+            type="button"
+            onClick={() => setLocale('en')}
+            className={cn(
+              'rounded px-1.5 py-0.5 text-xs font-medium transition-colors',
+              locale === 'en' ? 'bg-violet-600/30 text-violet-200' : 'text-gray-500 hover:text-gray-300',
+            )}
+          >
+            EN
+          </button>
+          <button
+            type="button"
+            onClick={() => setLocale('am')}
+            className={cn(
+              'rounded px-1.5 py-0.5 text-xs font-medium transition-colors',
+              locale === 'am' ? 'bg-violet-600/30 text-violet-200' : 'text-gray-500 hover:text-gray-300',
+            )}
+          >
+            አማ
+          </button>
+        </div>
+        <div className="px-4 py-3">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-500/20 text-sm font-semibold text-violet-300">
             {user.firstName?.charAt(0) ?? 'U'}
             {user.lastName?.charAt(0) ?? ''}

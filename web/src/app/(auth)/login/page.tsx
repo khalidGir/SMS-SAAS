@@ -5,14 +5,17 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuth } from '@/hooks/useAuth';
+import { useTranslation } from '@/hooks/useTranslation';
 import { loginSchema, type LoginInput } from '@/lib/validations/schemas';
+import { cn } from '@/lib/utils';
 
 const ERROR_MESSAGES: Record<string, string> = {
-  UNAUTHORIZED: 'Invalid email or password',
-  ACCOUNT_LOCKED: 'Account locked after 5 failed attempts. Please reset your password or try again later.',
+  UNAUTHORIZED: 'UNAUTHORIZED',
+  ACCOUNT_LOCKED: 'ACCOUNT_LOCKED',
 };
 
 export default function LoginPage() {
+  const { t, locale, setLocale } = useTranslation();
   const { login } = useAuth();
   const router = useRouter();
   const [serverError, setServerError] = useState('');
@@ -38,7 +41,8 @@ export default function LoginPage() {
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Login failed';
       const code = msg.toUpperCase().replace(/\s+/g, '_');
-      setServerError(ERROR_MESSAGES[code] || msg);
+      const key = ERROR_MESSAGES[code] || '';
+      setServerError(key ? t(`auth.${key}`) : msg);
     } finally {
       setServerLoading(false);
     }
@@ -61,7 +65,7 @@ export default function LoginPage() {
       {/* Email */}
       <div>
         <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-          Email or Phone
+          {t('auth.email')}
         </label>
         <input
           id="email"
@@ -78,7 +82,7 @@ export default function LoginPage() {
       {/* Password */}
       <div>
         <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-          Password
+          {t('auth.password')}
         </label>
         <div className="relative mt-1">
           <input
@@ -119,13 +123,13 @@ export default function LoginPage() {
             ref={rememberMeRef}
             className="rounded border-gray-300 text-violet-600 focus:ring-violet-500"
           />
-          Remember me
+          {t('auth.rememberMe')}
         </label>
         <a
           href="/forgot-password"
           className="text-sm font-medium text-violet-600 hover:text-violet-500"
         >
-          Forgot password?
+          {t('auth.forgotPassword')}
         </a>
       </div>
 
@@ -147,12 +151,37 @@ export default function LoginPage() {
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
-            Signing in...
+            {t('auth.signingIn')}
           </span>
         ) : (
-          'Sign in'
+          t('auth.signIn')
         )}
       </button>
+
+      {/* Language selector */}
+      <div className="flex items-center justify-center gap-2 pt-2">
+        <span className="text-xs text-gray-400">{t('auth.selectLanguage')}</span>
+        <button
+          type="button"
+          onClick={() => setLocale('en')}
+          className={cn(
+            'rounded px-2 py-1 text-xs font-medium transition-colors',
+            locale === 'en' ? 'bg-violet-100 text-violet-700' : 'text-gray-400 hover:text-gray-600',
+          )}
+        >
+          {t('auth.english')}
+        </button>
+        <button
+          type="button"
+          onClick={() => setLocale('am')}
+          className={cn(
+            'rounded px-2 py-1 text-xs font-medium transition-colors',
+            locale === 'am' ? 'bg-violet-100 text-violet-700' : 'text-gray-400 hover:text-gray-600',
+          )}
+        >
+          {t('auth.amharic')}
+        </button>
+      </div>
     </form>
   );
 }
