@@ -9,6 +9,7 @@ import paymentRoutes from './routes/payment.js';
 import analyticsRoutes from './routes/analytics.js';
 import academicRoutes from './routes/academic.js';
 import parentRoutes from './routes/parent.js';
+import webhookRoutes from './routes/webhook.js';
 import { authenticateJWT } from './middleware/authenticateJWT.js';
 import { requireRoles } from './middleware/requireRoles.js';
 import { executeLateFeeRun } from './services/lateFeeCron.js';
@@ -28,6 +29,7 @@ app.use('/api/v1/payments', paymentRoutes);
 app.use('/api/v1/analytics', analyticsRoutes);
 app.use('/api/v1/academic', academicRoutes);
 app.use('/api/v1/parent', parentRoutes);
+app.use('/api/v1/payments/webhook', webhookRoutes);
 
 // Manual trigger for late fee cron (admin only, dev convenience)
 app.post('/api/v1/admin/run-late-fee', authenticateJWT, requireRoles('ADMIN', 'SUPER_ADMIN'), async (req, res) => {

@@ -20,6 +20,14 @@ const BRAND: Record<string, { name: string; accent: string; bg: string; border: 
     button: 'bg-emerald-600',
     hover: 'hover:bg-emerald-700',
   },
+  debopay: {
+    name: 'DeboPay',
+    accent: 'blue',
+    bg: 'bg-blue-50',
+    border: 'border-blue-200',
+    button: 'bg-blue-700',
+    hover: 'hover:bg-blue-800',
+  },
 };
 
 export default function MockGatewayPage({ params }: { params: Promise<{ method: string }> }) {
@@ -67,7 +75,7 @@ export default function MockGatewayPage({ params }: { params: Promise<{ method: 
         <div className={`rounded-t-xl ${brand.bg} border-b ${brand.border} px-6 py-5 text-center`}>
           <div className="mx-auto flex h-14 items-center justify-center">
             <img
-              src={method === 'telebirr' ? '/images/telebirr-logo.svg' : '/images/chapa-logo.svg'}
+              src={method === 'telebirr' ? '/images/telebirr-logo.svg' : method === 'debopay' ? '/images/debopay-logo.svg' : '/images/chapa-logo.svg'}
               alt={brand.name}
               className="h-12 object-contain"
             />

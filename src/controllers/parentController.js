@@ -7,7 +7,7 @@ import { calculateConvenienceFee } from '../utils/feeCalculator.js';
 const parentPaymentSchema = z.object({
   invoiceId: z.string().uuid('Invalid invoice ID'),
   amount: z.coerce.number().positive('Payment amount must be greater than zero'),
-  paymentMethod: z.enum(['CHAPA', 'TELEBIRR'], {
+  paymentMethod: z.enum(['CHAPA', 'TELEBIRR', 'DEBOPAY'], {
     message: 'Please select Chapa or Telebirr',
   }),
 });

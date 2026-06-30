@@ -10,7 +10,7 @@ import Toast from '@/components/shared/Toast';
 const CONVENIENCE_FEE_PERCENT = 2.5;
 const CONVENIENCE_FEE_CAP = 500;
 
-type GatewayType = 'CHAPA' | 'TELEBIRR' | null;
+type GatewayType = 'CHAPA' | 'TELEBIRR' | 'DEBOPAY' | null;
 type PaymentStep = 'SELECT_METHOD' | 'PROCESSING' | 'ERROR';
 
 interface PayNowModalProps {
@@ -143,6 +143,23 @@ export default function PayNowModal({ invoice, onClose }: PayNowModalProps) {
             </div>
             <span>Telebirr</span>
             <span className="text-xs text-gray-400">Pay with mobile money</span>
+          </button>
+
+          <button
+            onClick={() => setSelectedMethod('DEBOPAY')}
+            className={`flex flex-col items-center justify-center gap-2 rounded-xl border-2 p-5 text-sm font-medium transition-all duration-150 ${
+              selectedMethod === 'DEBOPAY'
+                ? 'border-blue-700 bg-blue-50 text-blue-700 ring-1 ring-blue-700/20'
+                : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50'
+            }`}
+          >
+            <div className={`flex h-10 w-10 items-center justify-center rounded-lg overflow-hidden ${
+              selectedMethod === 'DEBOPAY' ? 'bg-white' : 'bg-gray-100'
+            }`}>
+              <img src="/images/debopay-logo.svg" alt="DeboPay" className="h-8 w-8 object-contain" />
+            </div>
+            <span>DeboPay</span>
+            <span className="text-xs text-gray-400">Pay with 30+ banks & wallets</span>
           </button>
         </div>
       </div>
